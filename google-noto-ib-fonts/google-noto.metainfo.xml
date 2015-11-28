@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2014 Parag Nemade <pnemade AT redhat DOT com> -->
+<component type="font">
+  <id>google-noto</id>
+  <metadata_license>CC-BY-3.0</metadata_license>
+  <name>Noto</name>
+  <summary>Hinted and Non Hinted open type fonts for Unicode scripts</summary>
+  <description>
+    <p>
+      Noto fonts aims to remove tofu from web by providing fonts for all
+      Unicode supported script. Its design goal is to achieve visual harmonization
+      between multiple scripts. Noto family supports almost all script available
+      in Unicode.
+    </p>
+  </description>
+  <updatecontact>pnemade_at_redhat_dot_com</updatecontact>
+  <url type="homepage">https://code.google.com/p/noto</url>
+</component>

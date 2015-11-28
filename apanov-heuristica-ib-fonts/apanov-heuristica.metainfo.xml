@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2014 Parag Nemade <pnemade AT redhat DOT com> -->
+<component type="font">
+  <id>apanov-heuristica</id>
+  <metadata_license>CC-BY-3.0</metadata_license>
+  <name>Heuristica</name>
+  <summary>A serif latin &amp; cyrillic font</summary>
+  <description>
+    <p>
+      Heuristica is a serif latin &amp; cyrillic font, derived from the “Adobe Utopia”
+      font that was released to the TeX Users Group under a liberal license.
+    </p>
+  </description>
+  <updatecontact>pnemade_at_redhat_dot_com</updatecontact>
+  <url type="homepage">http://sourceforge.net/projects/heuristica/</url>
+</component>
+

@@ -1,0 +1,18 @@
+--- freetype-2.5.2/builds/unix/freetype-config.in
++++ freetype-2.5.2/builds/unix/freetype-config.in
+@@ -12,11 +12,11 @@
+ LC_ALL=C
+ export LC_ALL
+ 
+-prefix="%prefix%"
+-exec_prefix="%exec_prefix%"
++prefix=`pkg-config --variable prefix freetype2`
++exec_prefix=`pkg-config --variable exec_prefix freetype2`
+ exec_prefix_set="no"
+-includedir="%includedir%"
+-libdir="%libdir%"
++includedir=`pkg-config --variable includedir freetype2`
++libdir=`pkg-config --variable libdir freetype2`
+ 
+ usage()
+ {

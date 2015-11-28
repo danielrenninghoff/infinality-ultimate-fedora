@@ -1,0 +1,11 @@
+/repo
+*/root.log
+*/state.log
+*/build.log
+*/*.rpm
+*/*.tar.xz
+*/*.tar.bz2
+*/*.tar.gz
+*/*.zip
+*/*.ttf
+*/*.otf

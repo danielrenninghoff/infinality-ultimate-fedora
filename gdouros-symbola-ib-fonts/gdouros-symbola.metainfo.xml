@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2014 Parag Nemade <pnemade AT redhat DOT com> -->
+<component type="font">
+  <id>gdouros-symbola</id>
+  <metadata_license>CC-BY-3.0</metadata_license>
+  <name>Symbola</name>
+  <summary>A symbol font</summary>
+  <description>
+    <p>
+      Symbola covers many scripts and symbols supported by Unicode.
+
+      These include those in Basic Latin, Latin-1 Supplement, Latin Extended-A, IPA
+      Extensions, Spacing Modifier Letters, Greek and Coptic, Cyrillic, Cyrillic
+      Supplementary, General Punctuation, Superscripts and Subscripts, and many
+      others.
+
+      It was created by George Douros.
+    </p>
+  </description>
+  <updatecontact>pnemade_at_redhat_dot_com</updatecontact>
+  <url type="homepage">http://users.teilar.gr/~g1951d/</url>
+</component>
+

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="font">
+  <id>abattis-cantarell</id>
+  <metadata_license>CC-BY-3.0</metadata_license>
+  <name>Cantarell</name>
+  <summary>Cantarell, a Humanist sans-serif font family</summary>
+  <description>
+    <p>
+      Cantarell is a set of fonts designed by Dave Crossland.
+      It is a sans-serif humanist typeface family.
+    </p>
+  </description>
+  <updatecontact>psatpute_at_redhat_dot_com</updatecontact>
+  <url type="homepage">http://abattis.org/cantarell/</url>
+</component>
