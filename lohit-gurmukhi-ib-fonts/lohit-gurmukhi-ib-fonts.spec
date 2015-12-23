@@ -2,7 +2,7 @@
 
 Name:           %{fontname}-ib-fonts
 Version:        2.91.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Free Gurmukhi truetype font for Punjabi language
 
 License:        OFL
@@ -68,5 +68,8 @@ install -Dm 0644 -p %{SOURCE4} \
 
 
 %changelog
+* Sun Dec 06 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.91.0-2
+- Fixed a bug in the fontconfig files.
+
 * Sun Nov 22 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.91.0-1
 - based on lohit-gurmukhi-fonts-2.91.0-6.

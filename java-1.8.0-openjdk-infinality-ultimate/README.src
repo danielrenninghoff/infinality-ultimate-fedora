@@ -1,0 +1,2 @@
+The java-1.8.0-openjdk-src subpackage contains the complete OpenJDK 8
+class library source code for use by IDE indexers and debuggers.

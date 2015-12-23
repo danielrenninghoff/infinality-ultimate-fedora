@@ -1,0 +1,118 @@
+diff -ruN jdk8/common/autoconf/libraries.m4 jdk8/common/autoconf/libraries.m4
+--- openjdk/common/autoconf/libraries.m4	2013-11-14 22:04:38.039440136 -0500
++++ openjdk/common/autoconf/libraries.m4	2013-11-14 22:05:11.474356424 -0500
+@@ -676,6 +676,46 @@
+ 
+   ###############################################################################
+   #
++  # Check for the lcms2 library
++  #
++
++  AC_ARG_WITH(lcms, [AS_HELP_STRING([--with-lcms],
++  	[use lcms2 from build system or OpenJDK source (system, bundled) @<:@bundled@:>@])])
++
++  AC_CHECK_LIB(lcms2, cmsOpenProfileFromFile,
++               [ LCMS_FOUND=yes ],
++               [ LCMS_FOUND=no ])
++
++  AC_MSG_CHECKING([for which lcms to use])
++
++  DEFAULT_LCMS=bundled
++
++  #
++  # If user didn't specify, use DEFAULT_LCMS
++  #
++  if test "x${with_lcms}" = "x"; then
++      with_lcms=${DEFAULT_LCMS}
++  fi
++
++  if test "x${with_lcms}" = "xbundled"; then
++      USE_EXTERNAL_LCMS=false
++      AC_MSG_RESULT([bundled])
++  elif test "x${with_lcms}" = "xsystem"; then
++      if test "x${LCMS_FOUND}" = "xyes"; then
++          USE_EXTERNAL_LCMS=true
++          AC_MSG_RESULT([system])
++      else
++          AC_MSG_RESULT([system not found])
++          AC_MSG_ERROR([--with-lcms=system specified, but no lcms found!])
++      fi
++  else
++      AC_MSG_ERROR([Invalid value for --with-lcms: ${with_lcms}, use 'system' or 'bundled'])
++  fi
++
++  AC_SUBST(USE_EXTERNAL_LCMS)
++
++  ###############################################################################
++  #
+   # Check for the png library
+   #
+ 
+diff -ruN jdk8/jdk/make/lib/Awt2dLibraries.gmk jdk8/jdk/make/lib/Awt2dLibraries.gmk
+--- openjdk/jdk/make/lib/Awt2dLibraries.gmk	2013-11-14 22:04:38.040440133 -0500
++++ openjdk/jdk/make/lib/Awt2dLibraries.gmk	2013-11-14 22:05:11.475356411 -0500
+@@ -666,18 +666,35 @@
+ 
+ ##########################################################################################
+ 
++LIBLCMS_DIR := $(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms
++
++ifeq ($(USE_EXTERNAL_LCMS), true)
++  # If we're using an external library, we'll just need the wrapper part.
++  # By including it explicitely, all other files will be excluded.
++  BUILD_LIBLCMS_INCLUDE_FILES := LCMS.c
++  BUILD_LIBLCMS_HEADERS :=
++else
++  BUILD_LIBLCMS_INCLUDE_FILES :=
++  # If we're using the bundled library, we'll need to include it in the
++  # include path explicitly. Otherwise the system headers will be used.
++  BUILD_LIBLCMS_HEADERS := -I$(LIBLCMS_DIR)
++endif
++
+ # TODO: Update awt lib path when awt is converted
+ $(eval $(call SetupNativeCompilation,BUILD_LIBLCMS, \
+     LIBRARY := lcms, \
+     OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
+-    SRC := $(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms, \
++    SRC := $(LIBLCMS_DIR), \
++    INCLUDE_FILES := $(BUILD_LIBLCMS_INCLUDE_FILES), \
+     LANG := C, \
+     OPTIMIZATION := HIGHEST, \
+     CFLAGS := $(filter-out -xc99=%none, $(CFLAGS_JDKLIB)) \
+         -DCMS_DONT_USE_FAST_FLOOR \
+         $(SHARED_LIBRARY_FLAGS) \
+         -I$(JDK_TOPDIR)/src/share/native/sun/java2d \
+-        -I$(JDK_TOPDIR)/src/share/native/sun/awt/debug, \
++        -I$(JDK_TOPDIR)/src/share/native/sun/awt/debug \
++        $(BUILD_LIBLCMS_HEADERS) \
++        $(LCMS_CFLAGS), \
+     CFLAGS_solaris := -xc99=no_lib, \
+     CFLAGS_windows := -DCMS_IS_WINDOWS_, \
+     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/liblcms/mapfile-vers, \
+@@ -685,10 +702,10 @@
+         $(call SET_SHARED_LIBRARY_ORIGIN), \
+     LDFLAGS_solaris := /usr/lib$(OPENJDK_TARGET_CPU_ISADIR)/libm.so.2, \
+     LDFLAGS_windows := $(WIN_AWT_LIB) $(WIN_JAVA_LIB), \
+-    LDFLAGS_SUFFIX_solaris := -lawt -ljava -ljvm -lc, \
+-    LDFLAGS_SUFFIX_macosx := $(LIBM) -lawt -ljava -ljvm, \
+-    LDFLAGS_SUFFIX_linux := -lm -lawt -ljava -ljvm, \
+-    LDFLAGS_SUFFIX_aix := -lm -lawt -ljava -ljvm,\
++    LDFLAGS_SUFFIX_solaris := -lawt -ljava -ljvm -lc $(LCMS_LIBS), \
++    LDFLAGS_SUFFIX_macosx := $(LIBM) -lawt -ljava -ljvm $(LCMS_LIBS), \
++    LDFLAGS_SUFFIX_linux := -lm -lawt -ljava -ljvm $(LCMS_LIBS), \
++    LDFLAGS_SUFFIX_aix := -lm -lawt -ljava -ljvm $(LCMS_LIBS),\
+     VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
+     RC_FLAGS := $(RC_FLAGS) \
+         -D "JDK_FNAME=lcms.dll" \
+diff -r 3d1c3b0b73a3 src/share/native/sun/java2d/cmm/lcms/LCMS.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	Tue Sep 08 22:31:26 2015 +0300
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	Thu Oct 15 05:29:28 2015 +0100
+@@ -30,7 +30,7 @@
+ #include "jni_util.h"
+ #include "Trace.h"
+ #include "Disposer.h"
+-#include "lcms2.h"
++#include <lcms2.h>
+ #include "jlong.h"
+ 
+ 

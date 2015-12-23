@@ -1,0 +1,112 @@
+--- /dev/null
++++ jdk8/jdk/src/solaris/bin/aarch64/jvm.cfg
+@@ -0,0 +1,2 @@
++-server KNOWN
++-client IGNORE
+--- jdk8/common/autoconf/generated-configure.sh
++++ jdk8/common/autoconf/generated-configure.sh
+@@ -6731,8 +6731,9 @@
+ # The aliases save the names the user supplied, while $host etc.
+ # will get canonicalized.
+ test -n "$target_alias" &&
+-  test "$program_prefix$program_suffix$program_transform_name" = \
+-    NONENONEs,x,x, &&
++  test "$target_alias" != "$host_alias" &&
++    test "$program_prefix$program_suffix$program_transform_name" = \
++      NONENONEs,x,x, &&
+   program_prefix=${target_alias}-
+ 
+   # Figure out the build and target systems. # Note that in autoconf terminology, "build" is obvious, but "target"
+@@ -7950,6 +7963,9 @@
+   if test "x$JVM_VARIANT_ZEROSHARK" = xtrue ; then
+     INCLUDE_SA=false
+   fi
++  if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
++     INCLUDE_SA=false
++  fi
+   if test "x$VAR_CPU" = xppc64 ; then
+     INCLUDE_SA=false
+   fi
+@@ -29957,6 +29973,9 @@
+     s390)
+       ZERO_ARCHFLAG="${COMPILER_TARGET_BITS_FLAG}31"
+       ;;
++    aarch64)
++      ZERO_ARCHFLAG=""
++       ;;
+     *)
+       ZERO_ARCHFLAG="${COMPILER_TARGET_BITS_FLAG}${OPENJDK_TARGET_CPU_BITS}"
+   esac
+--- jdk8/common/autoconf/jdk-options.m4
++++ jdk8/common/autoconf/jdk-options.m4
+@@ -117,11 +117,6 @@
+   JVM_VARIANT_ZEROSHARK=`$ECHO "$JVM_VARIANTS" | $SED -e '/,zeroshark,/!s/.*/false/g' -e '/,zeroshark,/s/.*/true/g'`
+   JVM_VARIANT_CORE=`$ECHO "$JVM_VARIANTS" | $SED -e '/,core,/!s/.*/false/g' -e '/,core,/s/.*/true/g'`
+ 
+-  if test "x$JVM_VARIANT_CLIENT" = xtrue; then
+-    if test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
+-      AC_MSG_ERROR([You cannot build a client JVM for a 64-bit machine.])
+-    fi
+-  fi
+   if test "x$JVM_VARIANT_KERNEL" = xtrue; then
+     if test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
+       AC_MSG_ERROR([You cannot build a kernel JVM for a 64-bit machine.])
+@@ -159,6 +154,9 @@
+     INCLUDE_SA=false
+   fi
+   if test "x$VAR_CPU" = xppc64 ; then
++    INCLUDE_SA=false
++  fi
++  if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
+     INCLUDE_SA=false
+   fi
+   if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
+@@ -460,12 +458,6 @@
+     AC_MSG_ERROR([Update version must have a value])
+   elif test "x$with_update_version" != x; then
+     JDK_UPDATE_VERSION="$with_update_version"
+-    # On macosx 10.7, it's not possible to set --with-update-version=0X due
+-    # to a bug in expr (which reduces it to just X). To work around this, we
+-    # always add a 0 to one digit update versions.
+-    if test "${#JDK_UPDATE_VERSION}" = "1"; then
+-      JDK_UPDATE_VERSION="0${JDK_UPDATE_VERSION}"
+-    fi
+   fi
+ 
+   AC_ARG_WITH(user-release-suffix, [AS_HELP_STRING([--with-user-release-suffix],
+--- jdk8/common/autoconf/toolchain.m4
++++ jdk8/common/autoconf/toolchain.m4
+@@ -1158,6 +1158,9 @@
+     s390)
+       ZERO_ARCHFLAG="${COMPILER_TARGET_BITS_FLAG}31"
+       ;;
++    aarch64)
++      ZERO_ARCHFLAG=""
++      ;;
+     *)
+       ZERO_ARCHFLAG="${COMPILER_TARGET_BITS_FLAG}${OPENJDK_TARGET_CPU_BITS}"
+   esac
+--- jdk8/jdk/make/lib/SoundLibraries.gmk
++++ jdk8/jdk/make/lib/SoundLibraries.gmk
+@@ -138,6 +138,10 @@
+ 
+   ifeq ($(OPENJDK_TARGET_CPU), ppc64)
+        LIBJSOUND_CFLAGS += -DX_ARCH=X_PPC64
++  endif
++
++  ifeq ($(OPENJDK_TARGET_CPU), aarch64)
++	LIBJSOUND_CFLAGS += -DX_ARCH=X_AARCH64
+   endif
+ endif
+ 
+--- jdk8/jdk/make/CompileJavaClasses.gmk
++++ jdk8/jdk/make/CompileJavaClasses.gmk
+@@ -390,7 +390,7 @@
+ 
+ ##########################################################################################
+ 
+-all: $(BUILD_JDK) $(BUILD_SECURITY) $(COPY_EXTRA) \
++all: $(BUILD_JDK) $(BUILD_SECURITY) $(BUILD_JOBJC) $(BUILD_JOBJC_HEADERS) $(COPY_EXTRA) \
+     $(JDK_OUTPUTDIR)/classes/META-INF/services/com.sun.tools.xjc.Plugin \
+     $(BUILD_ACCESSBRIDGE_32) $(BUILD_ACCESSBRIDGE_64) \
+     $(BUILD_ACCESSBRIDGE_LEGACY)

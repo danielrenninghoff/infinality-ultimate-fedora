@@ -1,0 +1,40 @@
+--- jdk8/hotspot/agent/src/share/classes/sun/jvm/hotspot/tools/PStack.java	2012-04-06 02:26:33.322164601 +0200
++++ jdk8/hotspot/agent/src/share/classes/sun/jvm/hotspot/tools/PStack.java	2012-04-06 02:26:57.958514071 +0200
+@@ -1,5 +1,6 @@
+ /*
+  * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2012, Red Hat Inc.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -84,7 +85,8 @@
+                out.print("----------------- ");
+                out.print(th);
+                out.println(" -----------------");
+-               while (f != null) {
++               int maxStack = 256;
++               while (f != null && maxStack-- > 0) {
+                   ClosestSymbol sym = f.closestSymbolToPC();
+                   Address pc = f.pc();
+                   out.print(pc + "\t");
+@@ -158,10 +160,19 @@
+                          }
+                       }
+                   }
++                  Address oldPC = f.pc();
++                  Address oldFP = f.localVariableBase();
+                   f = f.sender(th);
++                  if (f != null
++                      && oldPC.equals(f.pc())
++                      && oldFP.equals(f.localVariableBase())) {
++                      // We didn't make any progress
++                      f = null;
++                  }
+                }
+             } catch (Exception exp) {
+-               exp.printStackTrace();
++               // exp.printStackTrace();
++               out.println("bad stack: " + exp);
+                // continue, may be we can do a better job for other threads
+             }
+             if (concurrentLocks) {

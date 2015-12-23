@@ -1,0 +1,62 @@
+--- openjdk/jdk/make/lib/SoundLibraries.gmk.orig	2015-03-03 20:52:33.000000000 -0500
++++ openjdk/jdk/make/lib/SoundLibraries.gmk	2015-03-03 20:54:39.000000000 -0500
+@@ -140,6 +140,10 @@
+        LIBJSOUND_CFLAGS += -DX_ARCH=X_PPC64
+   endif
+ 
++  ifeq ($(OPENJDK_TARGET_CPU), ppc64le)
++       LIBJSOUND_CFLAGS += -DX_ARCH=X_PPC64LE
++  endif
++
+   ifeq ($(OPENJDK_TARGET_CPU), aarch64)
+ 	LIBJSOUND_CFLAGS += -DX_ARCH=X_AARCH64
+   endif
+diff -r 87c95759b92b src/share/native/com/sun/media/sound/SoundDefs.h
+--- openjdk/jdk/src/share/native/com/sun/media/sound/SoundDefs.h	Wed Feb 11 18:55:05 2015 -0800
++++ openjdk/jdk/src/share/native/com/sun/media/sound/SoundDefs.h	Tue Feb 17 18:25:01 2015 +0000
+@@ -43,6 +43,8 @@
+ #define X_ZERO          6
+ #define X_ARM           7
+ #define X_PPC           8
++#define X_PPC64         9
++#define X_PPC64LE      10
+ 
+ // **********************************
+ // Make sure you set X_PLATFORM and X_ARCH defines correctly.
+diff -r 87c95759b92b src/solaris/bin/ppc64le/jvm.cfg
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ openjdk/jdk/src/solaris/bin/ppc64le/jvm.cfg	Tue Feb 17 18:25:01 2015 +0000
+@@ -0,0 +1,33 @@
++# Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.  Oracle designates this
++# particular file as subject to the "Classpath" exception as provided
++# by Oracle in the LICENSE file that accompanied this code.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++#
++# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++# or visit www.oracle.com if you need additional information or have any
++# questions.
++#
++# List of JVMs that can be used as an option to java, javac, etc.
++# Order is important -- first in this list is the default JVM.
++# NOTE that this both this file and its format are UNSUPPORTED and
++# WILL GO AWAY in a future release.
++#
++# You may also select a JVM in an arbitrary location with the
++# "-XXaltjvm=<jvm_dir>" option, but that too is unsupported
++# and may not be available in a future release.
++#
++-server KNOWN

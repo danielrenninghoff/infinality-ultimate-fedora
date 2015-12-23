@@ -2,7 +2,7 @@ BASE = fedora-23
 DIRS = $(wildcard */)
 
 define makerpm =
-$(eval names := $(shell rpmspec -q --qf "%{name}-%{version}-%{release}.%{arch}.rpm " $1*.spec))
+$(eval names := $(shell rpmspec --target $(ARCH) -q --qf "%{name}-%{version}-%{release}.%{arch}.rpm " $1*.spec))
 spectool -C $1 -g $1*.spec
 for f in $(names); do\
 	if [ ! -f $1$$f ]; then \

@@ -2,8 +2,8 @@
 
 Summary: A free and portable font rendering engine
 Name: freetype-infinality-ultimate
-Version: 2.6.1
-Release: 4%{?dist}
+Version: 2.6.2
+Release: 3%{?dist}
 License: (FTL or GPLv2+) and BSD and MIT and Public Domain and zlib with acknowledgement
 Group: System Environment/Libraries
 URL: http://www.freetype.org
@@ -12,10 +12,12 @@ Source1: http://download.savannah.gnu.org/releases/freetype/freetype-doc-%{versi
 Source2: http://download.savannah.gnu.org/releases/freetype/ft2demos-%{version}.tar.bz2
 Source3: ftconfig.h
 Source4: infinality-settings.sh
+Source5: infinality-settings-generic
+Source6: xft-settings.sh
 
 Patch1:  freetype-2.2.1-enable-valid.patch
-Patch2:  02-upstream-2015.11.08.patch
-Patch3:  03-infinality-2.6.1-2015.11.08.patch
+Patch2:  02-upstream-2015.12.05.patch
+Patch3:  03-infinality-2.6.2-2015.12.05.patch
 
 # Enable additional demos
 Patch47:  freetype-2.5.2-more-demos.patch
@@ -99,6 +101,9 @@ popd
 
 %patch92 -p1 -b .freetype-config-prefix
 
+cp %{SOURCE4} .
+cp %{SOURCE5} .
+
 %build
 
 %configure --disable-static \
@@ -156,7 +161,7 @@ mv $RPM_BUILD_ROOT%{_includedir}/freetype2/freetype/config/ftconfig.h \
 install -p -m 644 %{SOURCE3} $RPM_BUILD_ROOT%{_includedir}/freetype2/freetype/config/ftconfig.h
 
 # install infinality-settings.sh
-install -p -m 755 -D %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/X11/xinit/xinitrc.d/infinality-settings.sh
+install -p -m 755 -D %{SOURCE6} $RPM_BUILD_ROOT%{_sysconfdir}/X11/xinit/xinitrc.d/xft-settings.sh
 
 # Don't package static a or .la files
 rm -f $RPM_BUILD_ROOT%{_libdir}/*.{a,la}
@@ -181,10 +186,11 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %{_libdir}/libfreetype.so.*
-%{_sysconfdir}/X11/xinit/xinitrc.d/infinality-settings.sh
+%{_sysconfdir}/X11/xinit/xinitrc.d/xft-settings.sh
 %doc README
 %doc docs/LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT
 %doc docs/CHANGES docs/VERSION.DLL docs/formats.txt docs/ft2faq.html
+%doc infinality-settings.sh infinality-settings-generic
 
 %files demos
 %defattr(-,root,root)
@@ -223,14 +229,23 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/*
 
 %changelog
+* Sun Dec 06 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.2-3
+* apply fixes by bohoomil and git commits.
+
+* Mon Nov 30 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.2-2
+* apply fixes by bohoomil and git commits.
+
+* Sun Nov 29 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.2-1
+- Updated to new upstream version.
+
 * Mon Nov 23 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.1-4
 - Fixed a multilib bug.
 
 * Sun Nov 22 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.1-3
 - Fixed a dependency bug.
 
-* Tue Nov 16 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.1-2
+* Mon Nov 16 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.1-2
 - Update to latest version from bohoomil.
 
-* Tue Nov 09 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.1-1
+* Mon Nov 09 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.1-1
 - Use base freetype package to create freetype-infinality-ultimate.

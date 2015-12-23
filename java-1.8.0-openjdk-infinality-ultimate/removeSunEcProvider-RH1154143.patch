@@ -1,0 +1,33 @@
+diff -r 135101850ef1 src/share/lib/security/java.security-linux
+--- openjdk/jdk/src/share/lib/security/java.security-linux	Wed Jun 03 20:23:19 2015 -0700
++++ openjdk/jdk/src/share/lib/security/java.security-linux	Thu Jul 02 04:02:18 2015 +0100
+@@ -67,13 +67,13 @@
+ #
+ security.provider.1=sun.security.provider.Sun
+ security.provider.2=sun.security.rsa.SunRsaSign
+-security.provider.3=sun.security.ec.SunEC
+-security.provider.4=com.sun.net.ssl.internal.ssl.Provider
+-security.provider.5=com.sun.crypto.provider.SunJCE
+-security.provider.6=sun.security.jgss.SunProvider
+-security.provider.7=com.sun.security.sasl.Provider
+-security.provider.8=org.jcp.xml.dsig.internal.dom.XMLDSigRI
+-security.provider.9=sun.security.smartcardio.SunPCSC
++security.provider.3=com.sun.net.ssl.internal.ssl.Provider
++security.provider.4=com.sun.crypto.provider.SunJCE
++security.provider.5=sun.security.jgss.SunProvider
++security.provider.6=com.sun.security.sasl.Provider
++security.provider.7=org.jcp.xml.dsig.internal.dom.XMLDSigRI
++security.provider.8=sun.security.smartcardio.SunPCSC
++
+ 
+ #
+ # Sun Provider SecureRandom seed source.
+@@ -500,7 +500,7 @@
+ #
+ # Example:
+ #   jdk.tls.disabledAlgorithms=MD5, SSLv3, DSA, RSA keySize < 2048
+-jdk.tls.disabledAlgorithms=SSLv3, RC4, DH keySize < 768
++jdk.tls.disabledAlgorithms=SSLv3, RC4, DH keySize < 768, EC, ECDHE, ECDH
+ 
+ # Legacy algorithms for Secure Socket Layer/Transport Layer Security (SSL/TLS)
+ # processing in JSSE implementation.

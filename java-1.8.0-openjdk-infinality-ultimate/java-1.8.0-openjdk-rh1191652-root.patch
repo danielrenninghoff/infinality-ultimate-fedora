@@ -1,0 +1,50 @@
+diff -r 590cc3ca1fec common/autoconf/hotspot-spec.gmk.in
+--- openjdk///common/autoconf/hotspot-spec.gmk.in	Wed Feb 11 12:18:34 2015 -0800
++++ openjdk///common/autoconf/hotspot-spec.gmk.in	Wed Feb 18 12:10:19 2015 +0000
+@@ -71,6 +71,10 @@
+ LIBARCH=$(OPENJDK_TARGET_CPU_LEGACY_LIB)
+ # Old name for OPENJDK_TARGET_CPU, uses i586 and amd64, instead of x86 and x86_64.
+ ARCH=$(OPENJDK_TARGET_CPU_LEGACY)
++# ppc64le uses the HotSpot ppc64 build
++ifeq ($(OPENJDK_TARGET_CPU), ppc64le)
++  ARCH=ppc64
++endif
+ # Legacy setting for building for a 64 bit machine.
+ # If yes then this expands to _LP64:=1
+ @LP64@
+--- openjdk/common/autoconf/jdk-options.m4.orig	2015-03-03 20:13:00.000000000 -0500
++++ openjdk/common/autoconf/jdk-options.m4	2015-03-03 20:36:17.000000000 -0500
+@@ -153,7 +153,7 @@
+   if test "x$JVM_VARIANT_ZEROSHARK" = xtrue ; then
+     INCLUDE_SA=false
+   fi
+-  if test "x$VAR_CPU" = xppc64 ; then
++  if test "x$VAR_CPU" = xppc64 -o "x$VAR_CPU" = xppc64le ; then
+     INCLUDE_SA=false
+   fi
+   if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
+diff -r 590cc3ca1fec common/autoconf/platform.m4
+--- openjdk///common/autoconf/platform.m4	Wed Feb 11 12:18:34 2015 -0800
++++ openjdk///common/autoconf/platform.m4	Wed Feb 18 12:10:19 2015 +0000
+@@ -61,7 +61,7 @@
+       VAR_CPU_ENDIAN=big
+       ;;
+     powerpc64le)
+-      VAR_CPU=ppc64
++      VAR_CPU=ppc64le
+       VAR_CPU_ARCH=ppc
+       VAR_CPU_BITS=64
+       VAR_CPU_ENDIAN=little
+diff -r 590cc3ca1fec common/autoconf/toolchain.m4
+--- openjdk///common/autoconf/toolchain.m4	Wed Feb 11 12:18:34 2015 -0800
++++ openjdk///common/autoconf/toolchain.m4	Wed Feb 18 12:10:19 2015 +0000
+@@ -1056,6 +1056,9 @@
+   else
+     CCXXFLAGS_JDK="$CCXXFLAGS_JDK -D_BIG_ENDIAN"
+   fi
++  if test "x$OPENJDK_TARGET_CPU" = xppc64le; then
++    CCXXFLAGS_JDK="$CCXXFLAGS_JDK -DABI_ELFv2"
++  fi
+   if test "x$OPENJDK_TARGET_OS" = xlinux; then
+     CCXXFLAGS_JDK="$CCXXFLAGS_JDK -DLINUX"
+   fi

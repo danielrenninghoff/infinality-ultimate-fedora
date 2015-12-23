@@ -1,0 +1,17 @@
+diff -r 9d6eb2757167 make/defs.make
+--- openjdk/hotspot/make/defs.make	Wed Feb 11 18:56:26 2015 -0800
++++ openjdk/hotspot/make/defs.make	Tue Feb 17 16:39:22 2015 +0000
+@@ -317,6 +317,13 @@
+   LIBARCH/ppc64   = ppc64
+   LIBARCH/zero    = $(ZERO_LIBARCH)
+ 
++  # Override LIBARCH for ppc64le
++  ifeq ($(ARCH), ppc64)
++    ifeq ($(OPENJDK_TARGET_CPU_ENDIAN), little)
++      LIBARCH = ppc64le
++    endif
++  endif
++
+   LP64_ARCH += sparcv9 amd64 ia64 ppc64 zero
+ endif
+ 

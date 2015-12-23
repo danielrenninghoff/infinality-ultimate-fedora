@@ -1,0 +1,20 @@
+# HG changeset patch
+# User andrew
+# Date 1429893959 -3600
+#      Fri Apr 24 17:45:59 2015 +0100
+# Node ID 6e3f4784affc0de360d763ad69979690b2650a98
+# Parent  75acb9c0991bc118463debed137d38ce40358bc0
+4890063, PR2304, RH1214835: HPROF: default text truncated when using doe=n option
+
+diff -r 75acb9c0991b -r 6e3f4784affc src/share/demo/jvmti/hprof/hprof_init.c
+--- openjdk/jdk/src/share/demo/jvmti/hprof/hprof_init.c	Thu Jun 04 18:00:35 2015 +0100
++++ openjdk/jdk/src/share/demo/jvmti/hprof/hprof_init.c	Fri Apr 24 17:45:59 2015 +0100
+@@ -1361,7 +1361,7 @@
+         } rawMonitorExit(gdata->dump_lock);
+ 
+         /* Dump everything if we need to */
+-        if (gdata->dump_on_exit && need_to_dump) {
++        if (gdata->dump_on_exit || need_to_dump) {
+ 
+             dump_all_data(env);
+         }
