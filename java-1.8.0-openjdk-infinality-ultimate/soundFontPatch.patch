@@ -1,0 +1,53 @@
+# HG changeset patch
+# User omajid
+# Date 1445973555 14400
+# Node ID 3e006ea10d21a7fcf15725c51f2ab7ededce53ab
+# Parent  dfeaf40df80032570558c031f37f6630dc729e3f
+8140620: Find and load default.sf2 as the default soundbank on Linux
+Reviewed-by: serb
+
++++  openjdk/jdk/src/share/classes/com/sun/media/sound/SoftSynthesizer.java
+---  openjdk/jdk/src/share/classes/com/sun/media/sound/SoftSynthesizer.java
+@@ -671,6 +671,40 @@
+             actions.add(new PrivilegedAction<InputStream>() {
+                 public InputStream run() {
+                     if (System.getProperties().getProperty("os.name")
++                            .startsWith("Linux")) {
++
++                        File[] systemSoundFontsDir = new File[] {
++                            /* Arch, Fedora, Mageia */
++                            new File("/usr/share/soundfonts/"),
++                            new File("/usr/local/share/soundfonts/"),
++                            /* Debian, Gentoo, OpenSUSE, Ubuntu */
++                            new File("/usr/share/sounds/sf2/"),
++                            new File("/usr/local/share/sounds/sf2/"),
++                        };
++
++                        /*
++                         * Look for a default.sf2
++                         */
++                        for (File systemSoundFontDir : systemSoundFontsDir) {
++                            if (systemSoundFontDir.exists()) {
++                                File defaultSoundFont = new File(systemSoundFontDir, "default.sf2");
++                                if (defaultSoundFont.exists()) {
++                                    try {
++                                        return new FileInputStream(defaultSoundFont);
++                                    } catch (IOException e) {
++                                        // continue with lookup
++                                    }
++                                }
++                            }
++                        }
++                    }
++                    return null;
++                }
++            });
++
++            actions.add(new PrivilegedAction<InputStream>() {
++                public InputStream run() {
++                    if (System.getProperties().getProperty("os.name")
+                             .startsWith("Windows")) {
+                         File gm_dls = new File(System.getenv("SystemRoot")
+                                 + "\\system32\\drivers\\gm.dls");
+
+

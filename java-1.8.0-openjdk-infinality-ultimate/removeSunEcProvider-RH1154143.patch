@@ -1,6 +1,6 @@
-diff -r 135101850ef1 src/share/lib/security/java.security-linux
---- openjdk/jdk/src/share/lib/security/java.security-linux	Wed Jun 03 20:23:19 2015 -0700
-+++ openjdk/jdk/src/share/lib/security/java.security-linux	Thu Jul 02 04:02:18 2015 +0100
+diff -r 1fe56343ecc8 src/share/lib/security/java.security-linux
+--- openjdk/jdk/src/share/lib/security/java.security-linux	Tue Jan 12 21:01:12 2016 +0000
++++ openjdk/jdk/src/share/lib/security/java.security-linux	Tue Jan 12 23:59:19 2016 +0000
 @@ -67,13 +67,13 @@
  #
  security.provider.1=sun.security.provider.Sun
@@ -22,12 +22,12 @@ diff -r 135101850ef1 src/share/lib/security/java.security-linux
  
  #
  # Sun Provider SecureRandom seed source.
-@@ -500,7 +500,7 @@
+@@ -509,7 +509,7 @@
  #
  # Example:
  #   jdk.tls.disabledAlgorithms=MD5, SSLv3, DSA, RSA keySize < 2048
--jdk.tls.disabledAlgorithms=SSLv3, RC4, DH keySize < 768
-+jdk.tls.disabledAlgorithms=SSLv3, RC4, DH keySize < 768, EC, ECDHE, ECDH
+-jdk.tls.disabledAlgorithms=SSLv3, RC4, MD5withRSA, DH keySize < 768
++jdk.tls.disabledAlgorithms=SSLv3, RC4, MD5withRSA, DH keySize < 768, EC, ECDHE, ECDH
  
  # Legacy algorithms for Secure Socket Layer/Transport Layer Security (SSL/TLS)
  # processing in JSSE implementation.

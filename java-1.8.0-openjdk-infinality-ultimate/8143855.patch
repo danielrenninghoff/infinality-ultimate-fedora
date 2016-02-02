@@ -1,0 +1,29 @@
+# HG changeset patch
+# User andrew
+# Date 1448509207 0
+#      Thu Nov 26 03:40:07 2015 +0000
+# Node ID 4a4a5b8b3dfe44b25d2a40ba987e5243b3ebc9db
+# Parent  110735ab93eca3bd6e9b157955a942e00aed72e1
+8143855: Bad printf formatting in frame_zero.cpp
+Summary: Backport subset of 8075967 fix that resolves this issue.
+Reviewed-by: dholmes
+
+diff -r 110735ab93ec -r 4a4a5b8b3dfe src/cpu/zero/vm/frame_zero.cpp
+--- openjdk/hotspot/src/cpu/zero/vm/frame_zero.cpp	Wed Nov 04 13:38:38 2015 +0100
++++ openjdk/hotspot/src/cpu/zero/vm/frame_zero.cpp	Thu Nov 26 03:40:07 2015 +0000
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+  * Copyright 2007, 2008, 2009, 2010, 2011 Red Hat, Inc.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+@@ -216,7 +216,7 @@
+     valuebuf[buflen - 1] = '\0';
+ 
+     // Print the result
+-    st->print_cr(" " PTR_FORMAT ": %-21s = %s", addr, fieldbuf, valuebuf);
++    st->print_cr(" " PTR_FORMAT ": %-21s = %s", p2i(addr), fieldbuf, valuebuf);
+   }
+ }
+ 

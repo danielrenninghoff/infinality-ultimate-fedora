@@ -1,5 +1,6 @@
---- openjdk/jdk/make/lib/SoundLibraries.gmk.orig	2015-03-03 20:52:33.000000000 -0500
-+++ openjdk/jdk/make/lib/SoundLibraries.gmk	2015-03-03 20:54:39.000000000 -0500
+diff -r 1fe56343ecc8 make/lib/SoundLibraries.gmk
+--- openjdk/jdk/make/lib/SoundLibraries.gmk	Tue Jan 12 21:01:12 2016 +0000
++++ openjdk/jdk/make/lib/SoundLibraries.gmk	Wed Jan 13 00:18:02 2016 +0000
 @@ -140,6 +140,10 @@
         LIBJSOUND_CFLAGS += -DX_ARCH=X_PPC64
    endif
@@ -11,21 +12,21 @@
    ifeq ($(OPENJDK_TARGET_CPU), aarch64)
  	LIBJSOUND_CFLAGS += -DX_ARCH=X_AARCH64
    endif
-diff -r 87c95759b92b src/share/native/com/sun/media/sound/SoundDefs.h
---- openjdk/jdk/src/share/native/com/sun/media/sound/SoundDefs.h	Wed Feb 11 18:55:05 2015 -0800
-+++ openjdk/jdk/src/share/native/com/sun/media/sound/SoundDefs.h	Tue Feb 17 18:25:01 2015 +0000
-@@ -43,6 +43,8 @@
- #define X_ZERO          6
+diff -r 1fe56343ecc8 src/share/native/com/sun/media/sound/SoundDefs.h
+--- openjdk/jdk/src/share/native/com/sun/media/sound/SoundDefs.h	Tue Jan 12 21:01:12 2016 +0000
++++ openjdk/jdk/src/share/native/com/sun/media/sound/SoundDefs.h	Wed Jan 13 00:18:02 2016 +0000
+@@ -44,6 +44,8 @@
  #define X_ARM           7
  #define X_PPC           8
-+#define X_PPC64         9
-+#define X_PPC64LE      10
+ #define X_AARCH64	9
++#define X_PPC64        10
++#define X_PPC64LE      11
  
  // **********************************
  // Make sure you set X_PLATFORM and X_ARCH defines correctly.
-diff -r 87c95759b92b src/solaris/bin/ppc64le/jvm.cfg
+diff -r 1fe56343ecc8 src/solaris/bin/ppc64le/jvm.cfg
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ openjdk/jdk/src/solaris/bin/ppc64le/jvm.cfg	Tue Feb 17 18:25:01 2015 +0000
++++ openjdk/jdk/src/solaris/bin/ppc64le/jvm.cfg	Wed Jan 13 00:18:02 2016 +0000
 @@ -0,0 +1,33 @@
 +# Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
 +# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.

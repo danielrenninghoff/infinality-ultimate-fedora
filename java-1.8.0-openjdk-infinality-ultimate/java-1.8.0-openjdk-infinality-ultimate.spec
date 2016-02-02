@@ -38,6 +38,13 @@
 # note, that order  normal_suffix debug_suffix, in case of both enabled,
 # is expected in one single case at the end of build
 
+%global bootstrap_build 0
+
+%if %{bootstrap_build}
+%global targets bootcycle-images docs
+%else
+%global targets all
+%endif
 
 %global aarch64         aarch64 arm64 armv8
 # sometimes we need to distinguish big and little endian PPC64
@@ -45,6 +52,30 @@
 %global ppc64be         ppc64 ppc64p7
 %global multilib_arches %{power64} sparc64 x86_64
 %global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
+
+%ifnarch %{jit_arches}
+# Disable hardened build on non-jit arches. Work-around for RHBZ#1290936.
+%undefine _hardened_build
+%global ourcppflags %{nil}
+%global ourldflags %{nil}
+%else
+%ifarch %{aarch64}
+# Disable hardened build on AArch64 as it didn't bootcycle
+%undefine _hardened_build
+%global ourcppflags "-fstack-protector-strong"
+%global ourldflags %{nil}
+%else
+# Filter out flags from the optflags macro that cause problems with the OpenJDK build
+# We filter out -O flags so that the optimisation of HotSpot is not lowered from O3 to O2
+# We filter out -Wall which will otherwise cause HotSpot to produce hundreds of thousands of warnings (100+mb logs)
+# We replace it with -Wformat (required by -Werror=format-security) and -Wno-cpp to avoid FORTIFY_SOURCE warnings
+# We filter out -fexceptions as the HotSpot build explicitly does -fno-exceptions and it's otherwise the default for C++
+%global ourflags %(echo %optflags | sed -e 's|-Wall|-Wformat -Wno-cpp|' | sed -r -e 's|-O[0-9]*||')
+%global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||')
+
+%global ourldflags %{__global_ldflags}
+%endif
+%endif
 
 # With diabled nss is NSS deactivated, so in NSS_LIBDIR can be wrong path
 # the initialisation must be here. LAter the pkg-connfig have bugy behaviour
@@ -107,13 +138,6 @@
 %global with_systemtap 0
 %endif
 
-# AArch64 currently uses a different OpenJDK source tarball
-%ifarch %{aarch64}
-%global openjdk_sourceid 1
-%else
-%global openjdk_sourceid 0
-%endif
-
 # Convert an absolute path to a relative path.  Each symbolic link is
 # specified relative to the directory in which it is installed so that
 # it will resolve properly within chrooted installations.
@@ -123,13 +147,19 @@
 
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
-%global updatever       65
-%global buildver        b17
-%global aarch64_updatever 65
-%global aarch64_buildver b17
-%global aarch64_changesetid aarch64-jdk8u%{aarch64_updatever}-%{aarch64_buildver}
-# priority must be 7 digits in total
-%global priority        18000%{updatever}
+# note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
+%global project         aarch64-port
+%global repo            jdk8u
+%global revision        aarch64-jdk8u72-b15
+# eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
+%global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
+# eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
+%global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
+# eg jdk8u60-b27 -> b27
+%global buildver        %(VERSION=%{revision}; echo ${VERSION##*-})
+# priority must be 7 digits in total. The expression is workarounding tip
+%global priority        %(TIP=18000%{updatever};  echo ${TIP/tip/99})
+
 %global javaver         1.8.0
 
 # parametrized macros are order-sensitive
@@ -151,6 +181,8 @@
 %global sdkbindir()     %{expand:%{_jvmdir}/%{sdkdir %%1}/bin}
 %global jrebindir()     %{expand:%{_jvmdir}/%{jredir %%1}/bin}
 %global jvmjardir()     %{expand:%{_jvmjardir}/%{uniquesuffix %%1}}
+
+%global rpm_state_dir %{_localstatedir}/lib/rpm-state/
 
 %if %{with_systemtap}
 # Where to install systemtap tapset (links)
@@ -181,8 +213,9 @@ exit 0
 # The pretrans lua scriptlet prevents an unmodified java.security
 # from being replaced via an update. It gets created as
 # java.security.rpmnew instead. This invalidates the patch of
-# JDK-8061210 of the January 2015 CPU or JDK-8043201 of the
-# July 2015 CPU. We fix this via a post scriptlet which runs on updates.
+# JDK-8061210 of the January 2015 CPU, JDK-8043201 of the
+# July 2015 CPU and JDK-8141287 of the January 2016 CPU. We
+# fix this via a post scriptlet which runs on updates.
 if [ "$1" -gt 1 ]; then
   javasecurity="%{_jvmdir}/%{uniquesuffix}/jre/lib/security/java.security"
   sum=$(md5sum "${javasecurity}" | cut -d' ' -f1)
@@ -191,7 +224,8 @@ if [ "$1" -gt 1 ]; then
        "${sum}" = 'b138695d0c0ea947e64a21a627d973ba' -o \\
        "${sum}" = 'd17958676bdb9f9d941c8a59655311fb' -o \\
        "${sum}" = '5463aef7dbf0bbcfe79e0336a7f92701' -o \\
-       "${sum}" = '400cc64d4dd31f36dc0cc2c701d603db' ]; then
+       "${sum}" = '400cc64d4dd31f36dc0cc2c701d603db' -o \\
+       "${sum}" = '321342219bb130d238ff144b9e5dbfc1' ]; then
     if [ -f "${javasecurity}.rpmnew" ]; then
       mv -f "${javasecurity}.rpmnew" "${javasecurity}"
     fi
@@ -206,9 +240,14 @@ fi
 %endif
 %endif
 
+PRIORITY=%{priority}
+if [ "%1" == %{debug_suffix} ]; then
+  let PRIORITY=PRIORITY-1
+fi
+
 ext=.gz
 alternatives \\
-  --install %{_bindir}/java java %{jrebindir %%1}/java %{priority} \\
+  --install %{_bindir}/java java %{jrebindir %%1}/java $PRIORITY  --family %{name} \\
   --slave %{_jvmdir}/jre jre %{_jvmdir}/%{jredir %%1} \\
   --slave %{_jvmjardir}/jre jre_exports %{_jvmjardir}/%{jrelnk %%1} \\
   --slave %{_bindir}/jjs jjs %{jrebindir %%1}/jjs \\
@@ -219,12 +258,12 @@ alternatives \\
   --slave %{_bindir}/rmiregistry rmiregistry %{jrebindir %%1}/rmiregistry \\
   --slave %{_bindir}/servertool servertool %{jrebindir %%1}/servertool \\
   --slave %{_bindir}/tnameserv tnameserv %{jrebindir %%1}/tnameserv \\
+  --slave %{_bindir}/policytool policytool %{jrebindir %%1}/policytool \\
   --slave %{_bindir}/unpack200 unpack200 %{jrebindir %%1}/unpack200 \\
   --slave %{_mandir}/man1/java.1$ext java.1$ext \\
   %{_mandir}/man1/java-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/jjs.1$ext jjs.1$ext \\
   %{_mandir}/man1/jjs-%{uniquesuffix %%1}.1$ext \\
-  --slave %{_bindir}/policytool policytool %{jrebindir %%1}/policytool \\
   --slave %{_mandir}/man1/keytool.1$ext keytool.1$ext \\
   %{_mandir}/man1/keytool-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/orbd.1$ext orbd.1$ext \\
@@ -239,18 +278,20 @@ alternatives \\
   %{_mandir}/man1/servertool-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/tnameserv.1$ext tnameserv.1$ext \\
   %{_mandir}/man1/tnameserv-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/policytool.1$ext policytool.1$ext \\
+  %{_mandir}/man1/policytool-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/unpack200.1$ext unpack200.1$ext \\
   %{_mandir}/man1/unpack200-%{uniquesuffix %%1}.1$ext
 
 for X in %{origin} %{javaver} ; do
   alternatives \\
     --install %{_jvmdir}/jre-"$X" \\
-    jre_"$X" %{_jvmdir}/%{jredir %%1} %{priority} \\
+    jre_"$X" %{_jvmdir}/%{jredir %%1} $PRIORITY  --family %{name} \\
     --slave %{_jvmjardir}/jre-"$X" \\
     jre_"$X"_exports %{_jvmdir}/%{jredir %%1}
 done
 
-update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} %{priority} \\
+update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} $PRIORITY  --family %{name} \\
 --slave %{_jvmjardir}/jre-%{javaver}       jre_%{javaver}_%{origin}_exports      %{jvmjardir %%1}
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
@@ -280,9 +321,15 @@ exit 0
 }
 
 %global post_devel() %{expand:
+
+PRIORITY=%{priority}
+if [ "%1" == %{debug_suffix} ]; then
+  let PRIORITY=PRIORITY-1
+fi
+
 ext=.gz
 alternatives \\
-  --install %{_bindir}/javac javac %{sdkbindir %%1}/javac %{priority} \\
+  --install %{_bindir}/javac javac %{sdkbindir %%1}/javac $PRIORITY  --family %{name} \\
   --slave %{_jvmdir}/java java_sdk %{_jvmdir}/%{sdkdir %%1} \\
   --slave %{_jvmjardir}/java java_sdk_exports %{_jvmjardir}/%{sdkdir %%1} \\
   --slave %{_bindir}/appletviewer appletviewer %{sdkbindir %%1}/appletviewer \\
@@ -359,8 +406,6 @@ alternatives \\
   %{_mandir}/man1/jstatd-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/native2ascii.1$ext native2ascii.1$ext \\
   %{_mandir}/man1/native2ascii-%{uniquesuffix %%1}.1$ext \\
-  --slave %{_mandir}/man1/policytool.1$ext policytool.1$ext \\
-  %{_mandir}/man1/policytool-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/rmic.1$ext rmic.1$ext \\
   %{_mandir}/man1/rmic-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/schemagen.1$ext schemagen.1$ext \\
@@ -377,12 +422,12 @@ alternatives \\
 for X in %{origin} %{javaver} ; do
   alternatives \\
     --install %{_jvmdir}/java-"$X" \\
-    java_sdk_"$X" %{_jvmdir}/%{sdkdir %%1} %{priority} \\
+    java_sdk_"$X" %{_jvmdir}/%{sdkdir %%1} $PRIORITY  --family %{name} \\
     --slave %{_jvmjardir}/java-"$X" \\
     java_sdk_"$X"_exports %{_jvmjardir}/%{sdkdir %%1}
 done
 
-update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir %%1} %{priority} \\
+update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir %%1} $PRIORITY  --family %{name} \\
 --slave %{_jvmjardir}/java-%{javaver}-%{origin}       java_sdk_%{javaver}_%{origin}_exports      %{_jvmjardir}/%{sdkdir %%1}
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
@@ -411,9 +456,15 @@ exit 0
 }
 
 %global post_javadoc() %{expand:
+
+PRIORITY=%{priority}
+if [ "%1" == %{debug_suffix} ]; then
+  let PRIORITY=PRIORITY-1
+fi
+
 alternatives \\
   --install %{_javadocdir}/java javadocdir %{_javadocdir}/%{uniquejavadocdir %%1}/api \\
-  %{priority}
+  $PRIORITY  --family %{name}
 exit 0
 }
 
@@ -456,8 +507,8 @@ exit 0
 %{_mandir}/man1/servertool-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/tnameserv-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/unpack200-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/policytool-%{uniquesuffix %%1}.1*
 %config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/nss.cfg
-%{_jvmdir}/%{jredir %%1}/lib/audio/
 %ifarch %{jit_arches}
 %ifnarch %{power64}
 %attr(664, root, root) %ghost %{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/server/classes.jsa
@@ -504,7 +555,6 @@ exit 0
 %{_mandir}/man1/jstat-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/jstatd-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/native2ascii-%{uniquesuffix %%1}.1*
-%{_mandir}/man1/policytool-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/rmic-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/schemagen-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/serialver-%{uniquesuffix %%1}.1*
@@ -580,10 +630,17 @@ Requires: javapackages-tools
 Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools
+# tool to copy jdk's configs - should be Recommends only, but then only dnf/yum eforce it, not rpm transaction and so no configs are persisted when pure rpm -u is run. I t may be consiedered as regression
+Requires:	copy-jdk-configs >= 1.1-3
+OrderWithRequires: copy-jdk-configs
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(post):   chkconfig >= 1.7
 # Postun requires alternatives to uninstall tool alternatives.
 Requires(postun): %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(postun):   chkconfig >= 1.7
 
 Provides: java-%{javaver}-%{origin}-headless = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-headless%{?_isa} = %{epoch}:%{version}-%{release}
@@ -709,11 +766,11 @@ Group:   Development/Languages
 License:  ASL 1.1 and ASL 2.0 and GPL+ and GPLv2 and GPLv2 with exceptions and LGPL+ and LGPLv2 and MPLv1.0 and MPLv1.1 and Public Domain and W3C
 URL:      http://openjdk.java.net/
 
-# Sources from internal security patched trees.
-# ./generate_local_tarball.sh <path to 8u65 sources> jdk8u%%{updatever}-%%{buildver}
-# ./generate_local_tarball.sh <path to aarch64-port 8u65 sources> %%{aarch64_changesetid}
-Source0:  jdk8u-jdk8u%{updatever}-%{buildver}.tar.xz
-Source1:  jdk8u-%{aarch64_changesetid}.tar.xz
+# aarch64-port now contains integration forest of both aarch64 and normal jdk
+# Source from upstream OpenJDK8 project. To regenerate, use
+# VERSION=aarch64-jdk8u71-b15 FILE_NAME_ROOT=${VERSION}
+# REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
+Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -747,21 +804,20 @@ Source101: config.sub
 
 # Ignore AWTError when assistive technologies are loaded 
 Patch1:   java-%{javaver}-%{origin}-accessible-toolkit.patch
+
 # Restrict access to java-atk-wrapper classes
 Patch3: java-atk-wrapper-security.patch
-# RHBZ 808293
-Patch4: java-%{javaver}-%{origin}-PStack-808293.patch
-# Allow multiple initialization of PKCS11 libraries
+# Upstreamable patches
+# PR2737: Allow multiple initialization of PKCS11 libraries
 Patch5: multiple-pkcs11-library-init.patch
-# Include all sources in src.zip
-Patch7: include-all-srcs.patch
-# Problem discovered with make 4.0
-Patch12: removeSunEcProvider-RH1154143.patch
-Patch13: libjpeg-turbo-1.4-compat.patch
-
-#
-# OpenJDK specific patches
-#
+# PR2095, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure (sync with IcedTea 2.x)
+Patch504: rh1163501.patch
+# S4890063, PR2304, RH1214835: HPROF: default text truncated when using doe=n option (upstreaming post-CPU 2015/07)
+Patch511: rh1214835.patch
+# Turn off strict overflow on IndicRearrangementProcessor{,2}.cpp following 8140543: Arrange font actions
+Patch512: no_strict_overflow.patch
+ 
+# Arch-specific upstreamable patches
 
 Patch98: 004_add-fontconfig.patch
 Patch99: 005_enable-infinality.patch
@@ -770,28 +826,43 @@ Patch99: 005_enable-infinality.patch
 Patch100: java-%{javaver}-%{origin}-s390-java-opts.patch
 # Type fixing for s390
 Patch102: java-%{javaver}-%{origin}-size_t.patch
-
-Patch201: system-libjpeg.patch
+# Use "%z" for size_t on s390 as size_t != intptr_t
+Patch103: s390-size_t_format_flags.patch
+# Patches which need backporting to 8u
+# S8073139, RH1191652; fix name of ppc64le architecture
+Patch601: java-1.8.0-openjdk-rh1191652-root.patch
+Patch602: java-1.8.0-openjdk-rh1191652-jdk.patch
+Patch603: java-1.8.0-openjdk-rh1191652-hotspot-aarch64.patch
+# Include all sources in src.zip
+Patch7: include-all-srcs.patch
+# 8035341: Allow using a system installed libpng
 Patch202: system-libpng.patch
+# 8042159: Allow using a system-installed lcms2
 Patch203: system-lcms.patch
 
-Patch300: jstack-pr1845.patch
+# PR2462: Backport "8074839: Resolve disabled warnings for libunpack and the unpack200 binary"
+# This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
+Patch502: pr2462-01.patch
+Patch503: pr2462-02.patch
+# S8140620, PR2769: Find and load default.sf2 as the default soundbank on Linux
+Patch605: soundFontPatch.patch
 
+# Patches upstream and appearing in 8u76
 # Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
+# 8087120: [GCC5] java.lang.StackOverflowError on Zero JVM initialization on non x86 platforms
 Patch403: rhbz1206656_fix_current_stack_pointer.patch
+# S8143855: Bad printf formatting in frame_zero.cpp 
+Patch505: 8143855.patch
+# Patches ineligible for 8u
+# 8043805: Allow using a system-installed libjpeg
+Patch201: system-libjpeg.patch
 
-# PR2095, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure (sync with IcedTea 2.x)
-Patch504: rh1163501.patch
-# S4890063, PR2304, RH1214835: HPROF: default text truncated when using doe=n option (upstreaming post-CPU 2015/07)
-Patch511: rh1214835.patch
+# Local fixes
+# Turns off ECC support as we don't ship the SunEC provider currently
+Patch12: removeSunEcProvider-RH1154143.patch
 
-# RH1191652; fix name of ppc64le architecture
-Patch600: java-%{javaver}-%{origin}-rh1191652-hotspot.patch
-Patch601: java-%{javaver}-%{origin}-rh1191652-root.patch
-Patch602: java-%{javaver}-%{origin}-rh1191652-jdk.patch
-Patch603: java-%{javaver}-%{origin}-rh1191652-hotspot-aarch64.patch
-
-Patch9999: enableArm64.patch
+# Non-OpenJDK fixes
+Patch300: jstack-pr1845.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -828,11 +899,9 @@ BuildRequires: tzdata-java >= 2015d
 
 # cacerts build requirement.
 BuildRequires: openssl
-#prelink was removed from fedora
 %if %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
 %endif
-
 
 # this is built always, also during debug-only build
 # when it is built in debug-only, then this package is just placeholder
@@ -1013,13 +1082,14 @@ if [ %{include_debug_build} -eq 0 -a  %{include_normal_build} -eq 0 ] ; then
   echo "you have disabled both include_debug_build and include_debug_build. no go."
   exit 13
 fi
-%setup -q -c -n %{uniquesuffix ""} -T -a %{openjdk_sourceid}
+%setup -q -c -n %{uniquesuffix ""} -T -a 0
 # https://bugzilla.redhat.com/show_bug.cgi?id=1189084
 prioritylength=`expr length %{priority}`
 if [ $prioritylength -ne 7 ] ; then
  echo "priority must be 7 digits in total, violated"
  exit 14
 fi
+# For old patches
 ln -s openjdk jdk8
 
 cp %{SOURCE2} .
@@ -1036,26 +1106,16 @@ cp %{SOURCE101} openjdk/common/autoconf/build-aux/
 # Remove libraries that are linked
 sh %{SOURCE12}
 
-#pure aarch64 forest does not have them
-%ifnarch %{aarch64}
-# Add AArch64 support to configure & JDK build
-%patch9999
-%endif
-
 %patch201
 %patch202
 %patch203
 
-%ifnarch %{aarch64}
-%endif
 
 %patch1
 %patch3
-%patch4
 %patch5
 %patch7
 %patch12
-%patch13
 
 %patch98 -d jdk8/jdk -p1
 %patch99 -d jdk8/jdk -p1
@@ -1064,27 +1124,24 @@ sh %{SOURCE12}
 %ifarch s390
 %patch100
 %patch102
+%patch103
 %endif
 
 # Zero PPC fixes.
 %patch403
 
-# HotSpot ppc64le patch is different depending
-# on whether we are using 2.5 or 2.6 HotSpot.
-%ifarch %{aarch64}
 %patch603
-%else
-%patch600
-%endif
 
-#pure aarch64 forest does not have them
-%ifnarch %{aarch64}
 %patch601
 %patch602
-%endif
+%patch605
 
+%patch502
+%patch503
 %patch504
+%patch505
 %patch511
+%patch512
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -1127,8 +1184,12 @@ done
 
 %build
 # How many cpu's do we have?
-export NUM_PROC=`/usr/bin/getconf _NPROCESSORS_ONLN 2> /dev/null || :`
+export NUM_PROC=%(/usr/bin/getconf _NPROCESSORS_ONLN 2> /dev/null || :)
 export NUM_PROC=${NUM_PROC:-1}
+%if 0%{?_smp_ncpus_max}
+# Honor %%_smp_ncpus_max
+[ ${NUM_PROC} -gt %{?_smp_ncpus_max} ] && export NUM_PROC=%{?_smp_ncpus_max}
+%endif
 
 # Build IcedTea and OpenJDK.
 %ifarch s390x sparc64 alpha %{power64} %{aarch64}
@@ -1138,11 +1199,12 @@ export ARCH_DATA_MODEL=64
 export CFLAGS="$CFLAGS -mieee"
 %endif
 
-EXTRA_CFLAGS="-fstack-protector-strong"
+# We use ourcppflags because the OpenJDK build seems to
+# pass these to the HotSpot C++ compiler...
+EXTRA_CFLAGS="%ourcppflags"
 # Disable various optimizations to fix miscompliation. See:
 # - https://bugzilla.redhat.com/show_bug.cgi?id=1120792
-EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-devirtualize"
-EXTRA_CPP_FLAGS="-fno-devirtualize -fno-tree-vrp"
+EXTRA_CPP_FLAGS="%ourcppflags -fno-tree-vrp"
 # PPC/PPC64 needs -fno-tree-vectorize since -O3 would
 # otherwise generate wrong code producing segfaults.
 %ifarch %{power64} ppc
@@ -1175,7 +1237,7 @@ bash ../../configure \
     --with-update-version=%{updatever} \
     --with-build-number=%{buildver} \
 %ifarch %{aarch64}
-    --with-user-release-suffix="aarch64-%{aarch64_updatever}-%{aarch64_buildver}-%{aarch64_changesetid}" \
+    --with-user-release-suffix="aarch64-%{updatever}-%{buildver}" \
 %endif
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
     --with-debug-level=$debugbuild \
@@ -1188,6 +1250,7 @@ bash ../../configure \
     --with-stdc++lib=dynamic \
     --with-extra-cxxflags="$EXTRA_CPP_FLAGS" \
     --with-extra-cflags="$EXTRA_CFLAGS" \
+    --with-extra-ldflags="%{ourldflags}" \
     --with-num-cores="$NUM_PROC"
 
 cat spec.gmk
@@ -1204,7 +1267,7 @@ make \
     STRIP_POLICY=no_strip \
     POST_STRIP_CMD="" \
     LOG=trace \
-    all
+    %{targets}
 
 # the build (erroneously) removes read permissions from some jars
 # this is a regression in OpenJDK 7 (our compiler):
@@ -1268,11 +1331,6 @@ rm -rf $RPM_BUILD_ROOT
 STRIP_KEEP_SYMTAB=libjvm*
 
 for suffix in %{build_loop} ; do
-# Install symlink to default soundfont
-install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/audio
-pushd $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/audio
-ln -s %{_datadir}/soundfonts/default.sf2
-popd
 
 pushd %{buildoutputdir  $suffix}/images/%{j2sdkimage}
 
@@ -1482,173 +1540,45 @@ done
 %if %{include_normal_build} 
 # intentioanlly only for non-debug
 %pretrans headless -p <lua>
--- see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue 
-
+-- see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue
+-- see https://bugzilla.redhat.com/show_bug.cgi?id=1290388 for pretrans over pre
+-- if copy-jdk-configs is in transaction, it installs in pretrans to temp
+-- if copy_jdk_configs is in temp, then it means that copy-jdk-configs is in tranasction  and so is
+-- preferred over one in %%{_libexecdir}. If it is not in transaction, then depends 
+-- whether copy-jdk-configs is installed or not. If so, then configs are copied
+-- (copy_jdk_configs from %%{_libexecdir} used) or not copied at all
 local posix = require "posix"
+local debug = false
 
-local currentjvm = "%{uniquesuffix %{nil}}"
-local jvmdir = "%{_jvmdir %{nil}}"
-local jvmDestdir = jvmdir
-local origname = "java-%{javaver}-%{origin}"
-local origjavaver = "%{javaver}"
---trasnform substitute names to lua patterns
---all percentages must be doubled for case of RPM escapingg
-local name = string.gsub(string.gsub(origname, "%%-", "%%%%-"), "%%.", "%%%%.")
-local javaver = string.gsub(origjavaver, "%%.", "%%%%.")
-local arch ="%{_arch}"
-local  debug = false;
+SOURCE1 = "%{rpm_state_dir}/copy_jdk_configs.lua"
+SOURCE2 = "%{_libexecdir}/copy_jdk_configs.lua"
 
-local jvms = { }
+local stat1 = posix.stat(SOURCE1, "type");
+local stat2 = posix.stat(SOURCE2, "type");
 
-local caredFiles = {"jre/lib/calendars.properties",
-              "jre/lib/content-types.properties",
-              "jre/lib/flavormap.properties",
-              "jre/lib/logging.properties",
-              "jre/lib/net.properties",
-              "jre/lib/psfontj2d.properties",
-              "jre/lib/sound.properties",
-              "jre/lib/deployment.properties",
-              "jre/lib/deployment.config",
-              "jre/lib/security/US_export_policy.jar",
-              "jre/lib/security/java.policy",
-              "jre/lib/security/java.security",
-              "jre/lib/security/local_policy.jar",
-              "jre/lib/security/nss.cfg,",
-              "jre/lib/ext"}
-
-function splitToTable(source, pattern)
-  local i1 = string.gmatch(source, pattern) 
-  local l1 = {}
-  for i in i1 do
-    table.insert(l1, i)
-  end
-  return l1
-end
-
-if (debug) then
-  print("started")
-end;
-
-foundJvms = posix.dir(jvmdir);
-if (foundJvms == nil) then
-  if (debug) then
-    print("no, or nothing in "..jvmdir.." exit")
-  end;
-  return
-end
-
-if (debug) then
-  print("found "..#foundJvms.."jvms")
-end;
-
-for i,p in pairs(foundJvms) do
--- regex similar to %{_jvmdir}/%{name}-%{javaver}*%{_arch} bash command
---all percentages must be doubled for case of RPM escapingg
-  if (string.find(p, name.."%%-"..javaver..".*"..arch) ~= nil ) then
-    if (debug) then
-      print("matched:  "..p)
-    end;
-    if (currentjvm ==  p) then
-      if (debug) then
-        print("this jdk is already installed. exiting lua script")
-      end;
-      return
-    end ;
-    table.insert(jvms, p)
-  else
-    if (debug) then
-      print("NOT matched:  "..p)
-    end;
-  end
-end
-
-if (#jvms <=0) then 
-  if (debug) then
-    print("no matching jdk in "..jvmdir.." exit")
-  end;
-  return
-end;
-
-if (debug) then
-  print("matched "..#jvms.." jdk in "..jvmdir)
-end;
-
---full names are like java-1.7.0-openjdk-1.7.0.60-2.4.5.1.fc20.x86_64
-table.sort(jvms , function(a,b) 
--- version-sort
--- split on non word: . - 
-  local l1 = splitToTable(a, "[^%.-]+") 
-  local l2 = splitToTable(b, "[^%.-]+") 
-  for x = 1, math.min(#l1, #l2) do
-    local l1x = tonumber(l1[x])
-    local l2x = tonumber(l2[x])
-    if (l1x ~= nil and l2x ~= nil)then
---if hunks are numbers, go with them 
-      if (l1x < l2x) then return true; end
-      if (l1x > l2x) then return false; end
-    else
-      if (l1[x] < l2[x]) then return true; end
-      if (l1[x] > l2[x]) then return false; end
-    end
--- if hunks are equals then move to another pair of hunks
-  end
-return a<b
-
-end)
-
-if (debug) then
-  print("sorted lsit of jvms")
-  for i,file in pairs(jvms) do
-    print(file)
-  end
-end
-
-latestjvm = jvms[#jvms]
-
-
-for i,file in pairs(caredFiles) do
-  local SOURCE=jvmdir.."/"..latestjvm.."/"..file
-  local DEST=jvmDestdir.."/"..currentjvm.."/"..file
-  if (debug) then
-    print("going to copy "..SOURCE)
-    print("to  "..DEST)
-  end;
-  local stat1 = posix.stat(SOURCE, "type");
   if (stat1 ~= nil) then
   if (debug) then
-    print(SOURCE.." exists")
+    print(SOURCE1 .." exists - copy-jdk-configs in transaction, using this one.")
   end;
-  local s = ""
-  local dirs = splitToTable(DEST, "[^/]+") 
-  for i,d in pairs(dirs) do
-    if (i == #dirs) then
-      break
-    end
-    s = s.."/"..d
-    local stat2 = posix.stat(s, "type");
-    if (stat2 == nil) then
-      if (debug) then
-        print(s.." does not exists, creating")
-      end;
-      posix.mkdir(s)
-    else
-      if (debug) then
-        print(s.." exists,not creating")
-      end;
-    end
-  end
--- Copy with -a to keep everything intact
-    local exe = "cp".." -ar "..SOURCE.." "..DEST
-    if (debug) then
-      print("executing "..exe)
-    end;    
-    os.execute(exe)
+  package.path = package.path .. ";" .. SOURCE1
+else 
+  if (stat2 ~= nil) then
+  if (debug) then
+    print(SOURCE2 .." exists - copy-jdk-configs alrady installed and NOT in transation. Using.")
+  end;
+  package.path = package.path .. ";" .. SOURCE2
   else
     if (debug) then
-      print(SOURCE.." does not exists")
-    end;
+      print(SOURCE1 .." does NOT exists")
+      print(SOURCE2 .." does NOT exists")
+      print("No config files will be copied")
+    end
+  return
   end
 end
+-- run contetn of included file with fake args
+arg = {"--currentjvm", "%{uniquesuffix %{nil}}", "--jvmdir", "%{_jvmdir %{nil}}", "--origname", "%{name}", "--origjavaver", "%{javaver}", "--arch", "%{_arch}"}
+require "copy_jdk_configs.lua"
 
 %post 
 %{post_script %{nil}}
@@ -1769,5 +1699,8 @@ end
 %endif
 
 %changelog
+* Sun Jan 31 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1:1.8.0.72-1.b15
+- updated to newest Java version.
+
 * Sun Nov 29 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1:1.8.0.65-3.b17
 - based on java-1.8.0-openjdk-1:1.8.0.65-3.b17

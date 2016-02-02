@@ -13,7 +13,7 @@ New.
 Name:             %{fontname}-ib-fonts
 Summary:          Fonts to replace commonly used Microsoft Windows fonts
 Version:          2.00.1
-Release:          1%{?dist}
+Release:          2%{?dist}
 Epoch:            1
 # The license of the Liberation Fonts is a EULA that contains GPLv2 and two
 # exceptions:
@@ -23,7 +23,7 @@ Epoch:            1
 License:          Liberation
 Group:            User Interface/X
 URL:              http://fedorahosted.org/liberation-fonts/
-Source0:          https://fedorahosted.org/releases/l/i/liberation-fonts/%{archivename}.tar.gz
+#Source0:          https://fedorahosted.org/releases/l/i/liberation-fonts/%{archivename}.tar.gz
 Source1:          https://fedorahosted.org/releases/l/i/liberation-fonts/liberation-fonts-%{narrowver}.tar.gz
 Source2:          45-liberation-mono.conf
 Source3:          45-liberation-narrow.conf
@@ -71,7 +71,7 @@ Conflicts:        %{fontname}-fonts-common
 Shared common files of Liberation font families.
 
 %files -n %{fontname}-ib-fonts-common
-%doc AUTHORS ChangeLog LICENSE README TODO
+%doc AUTHORS ChangeLog License.txt README TODO
 %dir %{_fontdir}
 %verify(not md5 size mtime) %{_fontdir}/fonts.dir
 %verify(not md5 size mtime) %{_fontdir}/fonts.scale
@@ -143,22 +143,16 @@ Arial Narrow.
 
 %prep
 %setup -q -b 1 -T -n liberation-fonts-%{narrowver}
-cd ..
-%setup -q -n %{archivename}
 
 %build
 make %{?_smp_mflags}
-mv liberation-fonts-ttf-%{version}/* .
-cd ../liberation-fonts-%{narrowver}
-make %{?_smp_mflags}
-mv liberation-fonts-ttf-%{narrowver}/LiberationSansNarrow*.ttf ../%{archivename}
-cd ../%{archivename}
-
 
 %install
+cd liberation-fonts-ttf-%{narrowver}
 # fonts .ttf
 install -m 0755 -d %{buildroot}%{_fontdir}
 install -m 0644 -p *.ttf %{buildroot}%{_fontdir}
+cd ..
 # catalogue
 install -m 0755 -d %{buildroot}%{catalogue}
 ln -s %{_fontdir} %{buildroot}%{catalogue}/%{name}
@@ -214,5 +208,8 @@ mkfontscale %{buildroot}%{_fontdir}
 mkfontdir %{buildroot}%{_fontdir}
 
 %changelog
+* Mon Feb 01 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1:2.00.1-2
+- reverted back to 1.07.4 because of a display issue in Chrome and Thunderbird.
+
 * Wed Nov 11 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1:2.00.1-1
 - Based on liberation-fonts 1:1.07.4-6.

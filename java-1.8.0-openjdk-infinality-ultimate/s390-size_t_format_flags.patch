@@ -1,0 +1,130 @@
+diff -r cf43a852f486 src/share/vm/asm/codeBuffer.cpp
+--- openjdk/hotspot/src/share/vm/asm/codeBuffer.cpp	Wed Jan 13 03:43:29 2016 +0000
++++ openjdk/hotspot/src/share/vm/asm/codeBuffer.cpp	Wed Jan 13 05:30:26 2016 +0000
+@@ -977,7 +977,7 @@
+     for (int n = (int) CodeBuffer::SECT_FIRST; n < (int) CodeBuffer::SECT_LIMIT; n++) {
+       CodeSection* sect = code_section(n);
+       if (!sect->is_allocated() || sect->is_empty())  continue;
+-      xtty->print_cr("<sect index='%d' size='" SIZE_FORMAT "' free='" SIZE_FORMAT "'/>",
++      xtty->print_cr("<sect index='%d' size='" INTX_FORMAT "' free='" INTX_FORMAT "'/>",
+                      n, sect->limit() - sect->start(), sect->limit() - sect->end());
+     }
+     xtty->print_cr("</blob>");
+diff -r cf43a852f486 src/share/vm/code/codeCache.cpp
+--- openjdk/hotspot/src/share/vm/code/codeCache.cpp	Wed Jan 13 03:43:29 2016 +0000
++++ openjdk/hotspot/src/share/vm/code/codeCache.cpp	Wed Jan 13 05:30:26 2016 +0000
+@@ -191,7 +191,7 @@
+     }
+     if (PrintCodeCacheExtension) {
+       ResourceMark rm;
+-      tty->print_cr("code cache extended to [" INTPTR_FORMAT ", " INTPTR_FORMAT "] (" SSIZE_FORMAT " bytes)",
++      tty->print_cr("code cache extended to [" INTPTR_FORMAT ", " INTPTR_FORMAT "] (" INTX_FORMAT " bytes)",
+                     (intptr_t)_heap->low_boundary(), (intptr_t)_heap->high(),
+                     (address)_heap->high() - (address)_heap->low_boundary());
+     }
+diff -r cf43a852f486 src/share/vm/gc_implementation/g1/g1StringDedupTable.cpp
+--- openjdk/hotspot/src/share/vm/gc_implementation/g1/g1StringDedupTable.cpp	Wed Jan 13 03:43:29 2016 +0000
++++ openjdk/hotspot/src/share/vm/gc_implementation/g1/g1StringDedupTable.cpp	Wed Jan 13 05:30:26 2016 +0000
+@@ -556,7 +556,7 @@
+     "   [Table]\n"
+     "      [Memory Usage: "G1_STRDEDUP_BYTES_FORMAT_NS"]\n"
+     "      [Size: "SIZE_FORMAT", Min: "SIZE_FORMAT", Max: "SIZE_FORMAT"]\n"
+-    "      [Entries: "UINTX_FORMAT", Load: "G1_STRDEDUP_PERCENT_FORMAT_NS", Cached: " UINTX_FORMAT ", Added: "UINTX_FORMAT", Removed: "UINTX_FORMAT"]\n"
++    "      [Entries: "UINTX_FORMAT", Load: "G1_STRDEDUP_PERCENT_FORMAT_NS", Cached: " SIZE_FORMAT ", Added: "UINTX_FORMAT", Removed: "UINTX_FORMAT"]\n"
+     "      [Resize Count: "UINTX_FORMAT", Shrink Threshold: "UINTX_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT_NS"), Grow Threshold: "UINTX_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT_NS")]\n"
+     "      [Rehash Count: "UINTX_FORMAT", Rehash Threshold: "UINTX_FORMAT", Hash Seed: 0x%x]\n"
+     "      [Age Threshold: "UINTX_FORMAT"]",
+diff -r cf43a852f486 src/share/vm/memory/blockOffsetTable.cpp
+--- openjdk/hotspot/src/share/vm/memory/blockOffsetTable.cpp	Wed Jan 13 03:43:29 2016 +0000
++++ openjdk/hotspot/src/share/vm/memory/blockOffsetTable.cpp	Wed Jan 13 05:30:26 2016 +0000
+@@ -57,7 +57,7 @@
+     gclog_or_tty->print_cr("BlockOffsetSharedArray::BlockOffsetSharedArray: ");
+     gclog_or_tty->print_cr("  "
+                   "  rs.base(): " INTPTR_FORMAT
+-                  "  rs.size(): " INTPTR_FORMAT
++                  "  rs.size(): " SIZE_FORMAT
+                   "  rs end(): " INTPTR_FORMAT,
+                   p2i(rs.base()), rs.size(), p2i(rs.base() + rs.size()));
+     gclog_or_tty->print_cr("  "
+diff -r cf43a852f486 src/share/vm/runtime/arguments.cpp
+--- openjdk/hotspot/src/share/vm/runtime/arguments.cpp	Wed Jan 13 03:43:29 2016 +0000
++++ openjdk/hotspot/src/share/vm/runtime/arguments.cpp	Wed Jan 13 05:30:26 2016 +0000
+@@ -1285,14 +1285,14 @@
+     }
+     if (PrintGCDetails && Verbose) {
+       // Too early to use gclog_or_tty
+-      tty->print_cr("CMS ergo set MaxNewSize: " SIZE_FORMAT, MaxNewSize);
++      tty->print_cr("CMS ergo set MaxNewSize: " UINTX_FORMAT, MaxNewSize);
+     }
+ 
+     // Code along this path potentially sets NewSize and OldSize
+     if (PrintGCDetails && Verbose) {
+       // Too early to use gclog_or_tty
+-      tty->print_cr("CMS set min_heap_size: " SIZE_FORMAT
+-           " initial_heap_size:  " SIZE_FORMAT
++      tty->print_cr("CMS set min_heap_size: " UINTX_FORMAT
++           " initial_heap_size:  " UINTX_FORMAT
+            " max_heap: " SIZE_FORMAT,
+            min_heap_size(), InitialHeapSize, max_heap);
+     }
+@@ -1308,7 +1308,7 @@
+         FLAG_SET_ERGO(uintx, NewSize, MIN2(preferred_max_new_size, (size_t)NewSize));
+         if (PrintGCDetails && Verbose) {
+           // Too early to use gclog_or_tty
+-          tty->print_cr("CMS ergo set NewSize: " SIZE_FORMAT, NewSize);
++          tty->print_cr("CMS ergo set NewSize: " UINTX_FORMAT, NewSize);
+         }
+       }
+       // Unless explicitly requested otherwise, size old gen
+@@ -1318,7 +1318,7 @@
+           FLAG_SET_ERGO(uintx, OldSize, MIN2((size_t)(NewRatio*NewSize), max_heap - NewSize));
+           if (PrintGCDetails && Verbose) {
+             // Too early to use gclog_or_tty
+-            tty->print_cr("CMS ergo set OldSize: " SIZE_FORMAT, OldSize);
++            tty->print_cr("CMS ergo set OldSize: " UINTX_FORMAT, OldSize);
+           }
+         }
+       }
+@@ -1834,7 +1834,7 @@
+ 
+       if (PrintGCDetails && Verbose) {
+         // Cannot use gclog_or_tty yet.
+-        tty->print_cr("  Initial heap size " SIZE_FORMAT, (uintx)reasonable_initial);
++        tty->print_cr("  Initial heap size " SIZE_FORMAT, (size_t)reasonable_initial);
+       }
+       FLAG_SET_ERGO(uintx, InitialHeapSize, (uintx)reasonable_initial);
+     }
+@@ -1844,7 +1844,7 @@
+       set_min_heap_size(MIN2((uintx)reasonable_minimum, InitialHeapSize));
+       if (PrintGCDetails && Verbose) {
+         // Cannot use gclog_or_tty yet.
+-        tty->print_cr("  Minimum heap size " SIZE_FORMAT, min_heap_size());
++        tty->print_cr("  Minimum heap size " UINTX_FORMAT, min_heap_size());
+       }
+     }
+   }
+diff -r cf43a852f486 src/share/vm/utilities/globalDefinitions.hpp
+--- openjdk/hotspot/src/share/vm/utilities/globalDefinitions.hpp	Wed Jan 13 03:43:29 2016 +0000
++++ openjdk/hotspot/src/share/vm/utilities/globalDefinitions.hpp	Wed Jan 13 05:30:26 2016 +0000
+@@ -1382,12 +1382,21 @@
+ 
+ #define INTPTR_FORMAT_W(width)   "%" #width PRIxPTR
+ 
++#ifdef S390
++#define SSIZE_FORMAT          "%z"   PRIdPTR
++#define SIZE_FORMAT           "%z"   PRIuPTR
++#define SIZE_FORMAT_HEX       "0x%z" PRIxPTR
++#define SSIZE_FORMAT_W(width) "%"   #width "z" PRIdPTR
++#define SIZE_FORMAT_W(width)  "%"   #width "z" PRIuPTR
++#define SIZE_FORMAT_HEX_W(width) "0x%" #width "z" PRIxPTR
++#else   // !S390
+ #define SSIZE_FORMAT          "%"   PRIdPTR
+ #define SIZE_FORMAT           "%"   PRIuPTR
+ #define SIZE_FORMAT_HEX       "0x%" PRIxPTR
+ #define SSIZE_FORMAT_W(width) "%"   #width PRIdPTR
+ #define SIZE_FORMAT_W(width)  "%"   #width PRIuPTR
+ #define SIZE_FORMAT_HEX_W(width) "0x%" #width PRIxPTR
++#endif  // S390
+ 
+ #define INTX_FORMAT           "%" PRIdPTR
+ #define UINTX_FORMAT          "%" PRIuPTR
