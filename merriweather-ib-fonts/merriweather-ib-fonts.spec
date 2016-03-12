@@ -1,7 +1,7 @@
 %global fontname    merriweather
 
 Name:    %{fontname}-ib-fonts
-Version: 1.4
+Version: 1.583
 Release: 1%{?dist}
 Summary: Merriweather fonts
 
@@ -10,7 +10,7 @@ URL:       www.sorkintype.com
 Source0:   https://github.com/google/fonts/raw/master/ofl/merriweather/Merriweather-Black.ttf
 Source1:   https://github.com/google/fonts/raw/master/ofl/merriweather/Merriweather-Bold.ttf
 Source2:   https://github.com/google/fonts/raw/master/ofl/merriweather/Merriweather-BoldItalic.ttf
-Source3:   https://github.com/google/fonts/raw/master/ofl/merriweather/Merriweather-HeavyItalic.ttf
+Source3:   https://github.com/google/fonts/raw/master/ofl/merriweather/Merriweather-BlackItalic.ttf
 Source4:   https://github.com/google/fonts/raw/master/ofl/merriweather/Merriweather-Italic.ttf
 Source5:   https://github.com/google/fonts/raw/master/ofl/merriweather/Merriweather-Light.ttf
 Source6:   https://github.com/google/fonts/raw/master/ofl/merriweather/Merriweather-LightItalic.ttf
@@ -52,5 +52,8 @@ cd %{_builddir}
 %doc OFL.txt FONTLOG.txt
 
 %changelog
+* Sat Mar 12 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1.583-1
+- Updated to version 1.583.
+
 * Sat Nov 21 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1.4-1
 - First version
