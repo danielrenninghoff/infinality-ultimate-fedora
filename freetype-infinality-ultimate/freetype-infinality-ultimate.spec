@@ -2,8 +2,8 @@
 
 Summary: A free and portable font rendering engine
 Name: freetype-infinality-ultimate
-Version: 2.6.2
-Release: 3%{?dist}
+Version: 2.6.3
+Release: 1%{?dist}
 License: (FTL or GPLv2+) and BSD and MIT and Public Domain and zlib with acknowledgement
 Group: System Environment/Libraries
 URL: http://www.freetype.org
@@ -16,8 +16,8 @@ Source5: infinality-settings-generic
 Source6: xft-settings.sh
 
 Patch1:  freetype-2.2.1-enable-valid.patch
-Patch2:  02-upstream-2015.12.05.patch
-Patch3:  03-infinality-2.6.2-2015.12.05.patch
+Patch2:  02-upstream-2016.03.26.patch
+Patch3:  03-infinality-2.6.3-2016.03.26.patch
 
 # Enable additional demos
 Patch47:  freetype-2.5.2-more-demos.patch
@@ -27,8 +27,6 @@ Patch88:  freetype-multilib.patch
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1161963
 Patch92:  freetype-2.5.3-freetype-config-prefix.patch
-
-Buildroot: %{_tmppath}/freetype-%{version}-root-%(%{__id_u} -n)
 
 BuildRequires: libX11-devel
 BuildRequires: libpng-devel
@@ -166,9 +164,6 @@ install -p -m 755 -D %{SOURCE6} $RPM_BUILD_ROOT%{_sysconfdir}/X11/xinit/xinitrc.
 # Don't package static a or .la files
 rm -f $RPM_BUILD_ROOT%{_libdir}/*.{a,la}
 
-%clean
-rm -rf $RPM_BUILD_ROOT
-
 %triggerpostun -- freetype < 2.0.5-3
 {
   # ttmkfdir updated - as of 2.0.5-3, on upgrades we need xfs to regenerate
@@ -184,16 +179,14 @@ rm -rf $RPM_BUILD_ROOT
 %postun -p /sbin/ldconfig
 
 %files
-%defattr(-,root,root)
+%{!?_licensedir:%global license %%doc}
+%license docs/LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT
 %{_libdir}/libfreetype.so.*
 %{_sysconfdir}/X11/xinit/xinitrc.d/xft-settings.sh
 %doc README
-%doc docs/LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT
-%doc docs/CHANGES docs/VERSION.DLL docs/formats.txt docs/ft2faq.html
 %doc infinality-settings.sh infinality-settings-generic
 
 %files demos
-%defattr(-,root,root)
 %{_bindir}/ftbench
 %{_bindir}/ftchkwd
 %{_bindir}/ftmemchk
@@ -215,7 +208,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc ChangeLog README
 
 %files devel
-%defattr(-,root,root)
+%doc docs/CHANGES docs/formats.txt docs/ft2faq.html
 %dir %{_includedir}/freetype2
 %{_datadir}/aclocal/freetype2.m4
 %{_includedir}/freetype2/*
@@ -229,11 +222,14 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/*
 
 %changelog
+* Wed Mar 30 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.3-1
+- update to version 2.6.3.
+
 * Sun Dec 06 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.2-3
-* apply fixes by bohoomil and git commits.
+- apply fixes by bohoomil and git commits.
 
 * Mon Nov 30 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.2-2
-* apply fixes by bohoomil and git commits.
+- apply fixes by bohoomil and git commits.
 
 * Sun Nov 29 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.6.2-1
 - Updated to new upstream version.
