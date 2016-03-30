@@ -4,8 +4,8 @@
 
 Summary:	A 2D graphics library
 Name:		cairo-infinality-ultimate
-Version:	1.14.4
-Release:	3%{?dist}
+Version:	1.14.6
+Release:	1%{?dist}
 URL:		http://cairographics.org
 Source0:	http://cairographics.org/releases/cairo-%{version}.tar.xz
 License:	LGPLv2 or MPLv1.1
@@ -15,6 +15,7 @@ Patch0:         cairo-multilib.patch
 Patch1:         cairo-respect-fontconfig_pb.patch
 Patch2:         cairo-server-side-gradients.patch
 Patch3:         cairo-webkit-html5-fix.patch
+Patch4:         cairo-make-lcdfilter-default.patch
 
 BuildRequires: pkgconfig
 BuildRequires: libXrender-devel
@@ -106,9 +107,11 @@ This package contains tools for working with the cairo graphics library.
 %prep
 %setup -q -n cairo-%{version}
 %patch0 -p1 -b .multilib
+%patch4 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+
 
 %build
 %configure --disable-static	\
@@ -136,7 +139,8 @@ rm $RPM_BUILD_ROOT%{_libdir}/*.la
 %postun gobject -p /sbin/ldconfig
 
 %files
-%doc AUTHORS BIBLIOGRAPHY BUGS COPYING COPYING-LGPL-2.1 COPYING-MPL-1.1 NEWS README
+%license COPYING COPYING-LGPL-2.1 COPYING-MPL-1.1
+%doc AUTHORS BIBLIOGRAPHY BUGS NEWS README
 %{_libdir}/libcairo.so.*
 %{_libdir}/libcairo-script-interpreter.so.*
 %{_bindir}/cairo-sphinx
@@ -192,6 +196,9 @@ rm $RPM_BUILD_ROOT%{_libdir}/*.la
 %{_libdir}/cairo/
 
 %changelog
+* Wed Mar 30 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1.14.6-1
+- updated to 1.14.6.
+
 * Mon Nov 23 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1.14.4-3
 - fixed a multilib bug.
 
