@@ -6,7 +6,7 @@
 %global archivename2 Cantarell-Regular
 
 Name: %{fontname}-ib-fonts
-Version: 0.0.22
+Version: 0.0.24
 Release: 1%{?dist}
 Summary: Cantarell, a Humanist sans-serif font family
 
@@ -63,6 +63,9 @@ install -Dm 0644 -p %{SOURCE1} \
 %{_datadir}/appdata/%{fontname}.metainfo.xml
 
 %changelog
+* Wed Mar 30 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 0.0.24-1
+- Update to 0.0.24.
+
 * Sat Feb 20 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 0.0.22-1
 - Updated to 0.0.22.
 
