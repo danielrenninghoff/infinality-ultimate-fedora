@@ -1,15 +1,15 @@
 # HG changeset patch
 # User mikael
-# Date 1435336416 -3600
-#      Fri Jun 26 17:33:36 2015 +0100
-# Node ID d64c0a9b8b5a43c1b7ba88a871f001fc6b44a3d4
-# Parent  ad88ac6bac57e540e87fdb5d9ad15528b1beee11
-8074839, PR2462: Resolve disabled warnings for libunpack and the unpack200 binary
+# Date 1426870964 25200
+#      Fri Mar 20 10:02:44 2015 -0700
+# Node ID ee13ce369705a700b867f8c77423580b7b22cc13
+# Parent  7847ccfb240b35ed0dd328f0404b713b20e0905a
+8074839: Resolve disabled warnings for libunpack and the unpack200 binary
 Reviewed-by: dholmes, ksrini
 
-diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack/bytes.h
---- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/bytes.h	Thu Jun 19 18:07:02 2014 +0400
-+++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/bytes.h	Fri Jun 26 17:33:36 2015 +0100
+diff --git openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/bytes.h openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/bytes.h
+--- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/bytes.h
++++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/bytes.h
 @@ -63,7 +63,7 @@
      bytes res;
      res.ptr = ptr + beg;
@@ -19,9 +19,9 @@ diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack
      return res;
    }
    // building C strings inside byte buffers:
-diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack/jni.cpp
---- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/jni.cpp	Thu Jun 19 18:07:02 2014 +0400
-+++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/jni.cpp	Fri Jun 26 17:33:36 2015 +0100
+diff --git openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/jni.cpp openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/jni.cpp
+--- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/jni.cpp
++++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/jni.cpp
 @@ -292,7 +292,7 @@
  
    if (uPtr->aborting()) {
@@ -48,10 +48,10 @@ diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack
    const char* prop  = env->GetStringUTFChars(pProp, JNI_FALSE);
    CHECK_EXCEPTION_RETURN_VALUE(prop, false);
    const char* value = env->GetStringUTFChars(pValue, JNI_FALSE);
-diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack/main.cpp
---- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/main.cpp	Thu Jun 19 18:07:02 2014 +0400
-+++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/main.cpp	Fri Jun 26 17:33:36 2015 +0100
-@@ -149,31 +149,28 @@
+diff --git openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/main.cpp openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/main.cpp
+--- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/main.cpp
++++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/main.cpp
+@@ -142,31 +142,28 @@
    return progname;
  }
  
@@ -101,9 +101,9 @@ diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack
    }
  }
  
-diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack/unpack.cpp
---- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.cpp	Thu Jun 19 18:07:02 2014 +0400
-+++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.cpp	Fri Jun 26 17:33:36 2015 +0100
+diff --git openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.cpp openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.cpp
+--- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.cpp
++++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.cpp
 @@ -222,9 +222,9 @@
    }
  
@@ -170,7 +170,7 @@ diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack
  
    initGroupIndexes();
    // Initialize hashTab to a generous power-of-two size.
-@@ -3676,21 +3677,22 @@
+@@ -3677,21 +3678,22 @@
  
  unpacker* debug_u;
  
@@ -197,7 +197,7 @@ diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack
    case CONSTANT_Signature:
      if (value.b.ptr == null)
        return ref(0)->string();
-@@ -3710,26 +3712,28 @@
+@@ -3711,26 +3713,28 @@
      break;
    default:
      if (nrefs == 0) {
@@ -235,10 +235,10 @@ diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack
  }
  
  void print_cp_entries(int beg, int end) {
-diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack/unpack.h
---- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.h	Thu Jun 19 18:07:02 2014 +0400
-+++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.h	Fri Jun 26 17:33:36 2015 +0100
-@@ -210,7 +210,7 @@
+diff --git openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.h openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.h
+--- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.h
++++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/unpack.h
+@@ -209,7 +209,7 @@
    byte*     rp;          // read pointer (< rplimit <= input.limit())
    byte*     rplimit;     // how much of the input block has been read?
    julong    bytes_read;
@@ -247,9 +247,9 @@ diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack
  
    // callback to read at least one byte, up to available input
    typedef jlong (*read_input_fn_t)(unpacker* self, void* buf, jlong minlen, jlong maxlen);
-diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack/utils.cpp
---- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/utils.cpp	Thu Jun 19 18:07:02 2014 +0400
-+++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/utils.cpp	Fri Jun 26 17:33:36 2015 +0100
+diff --git openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/utils.cpp openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/utils.cpp
+--- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/utils.cpp
++++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/utils.cpp
 @@ -81,7 +81,7 @@
  int assert_failed(const char* p) {
    char message[1<<12];
@@ -259,9 +259,9 @@ diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack
    breakpoint();
    unpack_abort(message);
    return 0;
-diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack/zip.cpp
---- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.cpp	Thu Jun 19 18:07:02 2014 +0400
-+++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.cpp	Fri Jun 26 17:33:36 2015 +0100
+diff --git openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.cpp openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.cpp
+--- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.cpp
++++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.cpp
 @@ -84,7 +84,7 @@
  }
  
@@ -286,18 +286,9 @@ diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack
  
    PRINTCR((2, "writing zip comment\n"));
    // Write the comment.
-@@ -590,7 +590,7 @@
-   zstream = NEW(z_stream, 1);
-   u->gzin = this;
-   u->read_input_fn = read_input_via_gzip;
--  u->gzcrc = crc32(0L, Z_NULL, 0);
-+  u->gzcrc = crc32(0, Z_NULL, 0);
- }
- 
- void gunzip::start(int magic) {
-diff -r ad88ac6bac57 -r d64c0a9b8b5a src/share/native/com/sun/java/util/jar/pack/zip.h
---- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.h	Thu Jun 19 18:07:02 2014 +0400
-+++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.h	Fri Jun 26 17:33:36 2015 +0100
+diff --git openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.h openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.h
+--- openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.h
++++ openjdk/jdk/src/share/native/com/sun/java/util/jar/pack/zip.h
 @@ -68,8 +68,8 @@
    }
  

@@ -110,7 +110,7 @@ diff -r cf43a852f486 src/share/vm/utilities/globalDefinitions.hpp
  
  #define INTPTR_FORMAT_W(width)   "%" #width PRIxPTR
  
-+#ifdef S390
++#if defined(S390) && !defined(_LP64)
 +#define SSIZE_FORMAT          "%z"   PRIdPTR
 +#define SIZE_FORMAT           "%z"   PRIuPTR
 +#define SIZE_FORMAT_HEX       "0x%z" PRIxPTR

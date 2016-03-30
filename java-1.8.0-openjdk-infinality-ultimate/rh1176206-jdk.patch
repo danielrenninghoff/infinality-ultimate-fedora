@@ -1,0 +1,67 @@
+--- openjdk/jdk/make/lib/Awt2dLibraries.gmk	2016-02-29 17:11:00.497484904 +0100
++++ openjdk/jdk/make/lib/Awt2dLibraries.gmk	2016-02-29 17:11:00.402486574 +0100
+@@ -618,7 +618,7 @@
+         XRSurfaceData.c \
+         XRBackendNative.c
+ 
+-    LIBAWT_XAWT_LDFLAGS_SUFFIX := $(LIBM) -lawt -lXext -lX11 -lXrender $(LIBDL) -lXtst -lXi -ljava -ljvm -lc
++    LIBAWT_XAWT_LDFLAGS_SUFFIX := $(LIBM) -lawt -lXext -lX11 -lXrender -lXcomposite $(LIBDL) -lXtst -lXi -ljava -ljvm -lc
+ 
+     ifeq ($(OPENJDK_TARGET_OS), linux)
+       # To match old build, add this to LDFLAGS instead of suffix.
+--- openjdk/jdk/src/solaris/native/sun/awt/awt_Robot.c	2016-02-29 17:11:00.777479982 +0100
++++ openjdk/jdk/src/solaris/native/sun/awt/awt_Robot.c	2016-02-29 17:11:00.677481740 +0100
+@@ -38,6 +38,7 @@
+ #include <X11/extensions/XTest.h>
+ #include <X11/extensions/XInput.h>
+ #include <X11/extensions/XI.h>
++#include <X11/extensions/Xcomposite.h>
+ #include <jni.h>
+ #include <sizecalc.h>
+ #include "robot_common.h"
+@@ -88,6 +89,32 @@
+     return isXTestAvailable;
+ }
+ 
++static Bool hasXCompositeOverlayExtension(Display *display) {
++
++    int xoverlay = False;
++    int eventBase, errorBase;
++    if (XCompositeQueryExtension(display, &eventBase, &errorBase)) {
++        int major = 0;
++        int minor = 0;
++
++        XCompositeQueryVersion(display, &major, &minor);
++        if (major > 0 || minor >= 3)
++            xoverlay = True;
++    }
++
++    return xoverlay;
++}
++
++static jboolean isXCompositeDisplay(Display *display, int screenNumber) {
++
++    char NET_WM_CM_Sn[25];
++    snprintf(NET_WM_CM_Sn, sizeof(NET_WM_CM_Sn), "_NET_WM_CM_S%d\0", screenNumber);
++
++    Atom managerSelection = XInternAtom(display, NET_WM_CM_Sn, 0);
++    Window owner = XGetSelectionOwner(display, managerSelection);
++
++    return owner != 0;
++}
+ 
+ static XImage *getWindowImage(Display * display, Window window,
+                               int32_t x, int32_t y,
+@@ -232,6 +259,12 @@
+     DASSERT(adata != NULL);
+ 
+     rootWindow = XRootWindow(awt_display, adata->awt_visInfo.screen);
++    if (isXCompositeDisplay(awt_display, adata->awt_visInfo.screen) &&
++        hasXCompositeOverlayExtension(awt_display))
++    {
++        rootWindow = XCompositeGetOverlayWindow(awt_display, rootWindow);
++    }
++
+     image = getWindowImage(awt_display, rootWindow, x, y, width, height);
+ 
+     /* Array to use to crunch around the pixel values */

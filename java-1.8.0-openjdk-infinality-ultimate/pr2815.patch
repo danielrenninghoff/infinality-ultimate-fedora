@@ -1,0 +1,189 @@
+# HG changeset patch
+# User andrew
+# Date 1453867347 0
+#      Wed Jan 27 04:02:27 2016 +0000
+# Node ID 26e2e029ee256e9815fdc324831a03d8582255e1
+# Parent  0ff7720931e8dbf7de25720bdc93b18527ab89e8
+PR2815: Race condition in SunEC provider with system NSS
+Summary: Perform initialisation and shutdown only when library is loaded or SunEC is finalized respectively
+
+diff -r 0ff7720931e8 -r 26e2e029ee25 make/mapfiles/libsunec/mapfile-vers
+--- openjdk/jdk/make/mapfiles/libsunec/mapfile-vers	Wed Jan 27 03:45:06 2016 +0000
++++ openjdk/jdk/make/mapfiles/libsunec/mapfile-vers	Wed Jan 27 04:02:27 2016 +0000
+@@ -31,6 +31,8 @@
+                 Java_sun_security_ec_ECDSASignature_signDigest;
+                 Java_sun_security_ec_ECDSASignature_verifySignedDigest;
+                 Java_sun_security_ec_ECDHKeyAgreement_deriveKey;
++		Java_sun_security_ec_SunEC_initialize;
++		Java_sun_security_ec_SunEC_cleanup;
+         local:
+                 *;
+ };
+diff -r 0ff7720931e8 -r 26e2e029ee25 src/share/classes/sun/security/ec/SunEC.java
+--- openjdk/jdk/src/share/classes/sun/security/ec/SunEC.java	Wed Jan 27 03:45:06 2016 +0000
++++ openjdk/jdk/src/share/classes/sun/security/ec/SunEC.java	Wed Jan 27 04:02:27 2016 +0000
+@@ -58,6 +58,7 @@
+             AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                 public Void run() {
+                     System.loadLibrary("sunec"); // check for native library
++                    initialize();
+                     return null;
+                 }
+             });
+@@ -81,4 +82,22 @@
+         }
+     }
+ 
++    /**
++     * Cleanup native resources during finalisation.
++     */
++    @Override
++    protected void finalize() {
++        cleanup();
++    }
++
++    /**
++     * Initialize the native code.
++     */
++    private static native void initialize();
++
++    /**
++     * Cleanup in the native layer.
++     */
++    private static native void cleanup();
++
+ }
+diff -r 0ff7720931e8 -r 26e2e029ee25 src/share/native/sun/security/ec/ECC_JNI.cpp
+--- openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp	Wed Jan 27 03:45:06 2016 +0000
++++ openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp	Wed Jan 27 04:02:27 2016 +0000
+@@ -121,13 +121,6 @@
+         goto cleanup;
+     }
+ 
+-#ifdef SYSTEM_NSS
+-    if (SECOID_Init() != SECSuccess) {
+-	ThrowException(env, INTERNAL_ERROR);
+-	goto cleanup;
+-    }
+-#endif
+-
+     // Fill a new ECParams using the supplied OID
+     if (EC_DecodeParams(&params_item, &ecparams, 0) != SECSuccess) {
+         /* bad curve OID */
+@@ -183,11 +176,6 @@
+         if (params_item.data) {
+             env->ReleaseByteArrayElements(encodedParams,
+                 (jbyte *) params_item.data, JNI_ABORT);
+-#ifdef SYSTEM_NSS
+-	    if (SECOID_Shutdown() != SECSuccess) {
+-		ThrowException(env, INTERNAL_ERROR);
+-	    }
+-#endif
+         }
+         if (ecparams) {
+             FreeECParams(ecparams, true);
+@@ -253,13 +241,6 @@
+         goto cleanup;
+     }
+ 
+-#ifdef SYSTEM_NSS
+-    if (SECOID_Init() != SECSuccess) {
+-	ThrowException(env, INTERNAL_ERROR);
+-	goto cleanup;
+-    }
+-#endif
+-
+     // Fill a new ECParams using the supplied OID
+     if (EC_DecodeParams(&params_item, &ecparams, 0) != SECSuccess) {
+         /* bad curve OID */
+@@ -307,11 +288,6 @@
+         if (params_item.data) {
+             env->ReleaseByteArrayElements(encodedParams,
+                 (jbyte *) params_item.data, JNI_ABORT);
+-#ifdef SYSTEM_NSS
+-	    if (SECOID_Shutdown() != SECSuccess) {
+-		ThrowException(env, INTERNAL_ERROR);
+-	    }
+-#endif
+         }
+         if (privKey.privateValue.data) {
+             env->ReleaseByteArrayElements(privateKey,
+@@ -378,13 +354,6 @@
+         goto cleanup;
+     }
+ 
+-#ifdef SYSTEM_NSS
+-    if (SECOID_Init() != SECSuccess) {
+-	ThrowException(env, INTERNAL_ERROR);
+-	goto cleanup;
+-    }
+-#endif
+-
+     // Fill a new ECParams using the supplied OID
+     if (EC_DecodeParams(&params_item, &ecparams, 0) != SECSuccess) {
+         /* bad curve OID */
+@@ -408,11 +377,6 @@
+         if (params_item.data) {
+             env->ReleaseByteArrayElements(encodedParams,
+                 (jbyte *) params_item.data, JNI_ABORT);
+-#ifdef SYSTEM_NSS
+-	    if (SECOID_Shutdown() != SECSuccess) {
+-		ThrowException(env, INTERNAL_ERROR);
+-	    }
+-#endif
+ 	}
+ 
+         if (pubKey.publicValue.data)
+@@ -474,13 +438,6 @@
+         goto cleanup;
+     }
+ 
+-#ifdef SYSTEM_NSS
+-    if (SECOID_Init() != SECSuccess) {
+-	ThrowException(env, INTERNAL_ERROR);
+-	goto cleanup;
+-    }
+-#endif
+-
+     // Fill a new ECParams using the supplied OID
+     if (EC_DecodeParams(&params_item, &ecparams, 0) != SECSuccess) {
+         /* bad curve OID */
+@@ -525,11 +482,6 @@
+         if (params_item.data) {
+             env->ReleaseByteArrayElements(encodedParams,
+                 (jbyte *) params_item.data, JNI_ABORT);
+-#ifdef SYSTEM_NSS
+-	    if (SECOID_Shutdown() != SECSuccess) {
+-		ThrowException(env, INTERNAL_ERROR);
+-	    }
+-#endif
+ 	}
+ 
+         if (ecparams)
+@@ -539,4 +491,26 @@
+     return jSecret;
+ }
+ 
++JNIEXPORT void
++JNICALL Java_sun_security_ec_SunEC_initialize
++  (JNIEnv *env, jclass UNUSED(clazz))
++{
++#ifdef SYSTEM_NSS
++    if (SECOID_Init() != SECSuccess) {
++	ThrowException(env, INTERNAL_ERROR);
++    }
++#endif
++}
++
++JNIEXPORT void
++JNICALL Java_sun_security_ec_SunEC_cleanup
++  (JNIEnv *env, jclass UNUSED(clazz))
++{
++#ifdef SYSTEM_NSS
++    if (SECOID_Shutdown() != SECSuccess) {
++	ThrowException(env, INTERNAL_ERROR);
++    }
++#endif
++}
++
+ } /* extern "C" */

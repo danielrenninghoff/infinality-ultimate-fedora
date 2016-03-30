@@ -1,0 +1,178 @@
+# HG changeset patch
+# User andrew
+# Date 1453866306 0
+#      Wed Jan 27 03:45:06 2016 +0000
+# Node ID 0ff7720931e8dbf7de25720bdc93b18527ab89e8
+# Parent  48c15869ecd568263249af4b9a4e98d4e57f9a8f
+PR2127: SunEC provider crashes when built using system NSS
+Summary: Use NSS memory management functions
+
+diff -r 48c15869ecd5 -r 0ff7720931e8 src/share/native/sun/security/ec/ECC_JNI.cpp
+--- openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp	Wed Jan 27 02:54:06 2016 +0000
++++ openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp	Wed Jan 27 03:45:06 2016 +0000
+@@ -32,6 +32,13 @@
+ #define INVALID_PARAMETER_EXCEPTION \
+         "java/security/InvalidParameterException"
+ #define KEY_EXCEPTION   "java/security/KeyException"
++#define INTERNAL_ERROR "java/lang/InternalError"
++
++#ifdef SYSTEM_NSS
++#define SYSTEM_UNUSED(x) UNUSED(x)
++#else
++#define SYSTEM_UNUSED(x) x
++#endif
+ 
+ extern "C" {
+ 
+@@ -49,8 +56,13 @@
+ /*
+  * Deep free of the ECParams struct
+  */
+-void FreeECParams(ECParams *ecparams, jboolean freeStruct)
++void FreeECParams(ECParams *ecparams, jboolean SYSTEM_UNUSED(freeStruct))
+ {
++#ifdef SYSTEM_NSS
++    // Needs to be freed using the matching method to the one
++    // that allocated it. PR_TRUE means the memory is zeroed.
++    PORT_FreeArena(ecparams->arena, PR_TRUE);
++#else
+     // Use B_FALSE to free the SECItem->data element, but not the SECItem itself
+     // Use B_TRUE to free both
+ 
+@@ -64,6 +76,7 @@
+     SECITEM_FreeItem(&ecparams->curveOID, B_FALSE);
+     if (freeStruct)
+         free(ecparams);
++#endif
+ }
+ 
+ jbyteArray getEncodedBytes(JNIEnv *env, SECItem *hSECItem)
+@@ -108,6 +121,13 @@
+         goto cleanup;
+     }
+ 
++#ifdef SYSTEM_NSS
++    if (SECOID_Init() != SECSuccess) {
++	ThrowException(env, INTERNAL_ERROR);
++	goto cleanup;
++    }
++#endif
++
+     // Fill a new ECParams using the supplied OID
+     if (EC_DecodeParams(&params_item, &ecparams, 0) != SECSuccess) {
+         /* bad curve OID */
+@@ -163,16 +183,26 @@
+         if (params_item.data) {
+             env->ReleaseByteArrayElements(encodedParams,
+                 (jbyte *) params_item.data, JNI_ABORT);
++#ifdef SYSTEM_NSS
++	    if (SECOID_Shutdown() != SECSuccess) {
++		ThrowException(env, INTERNAL_ERROR);
++	    }
++#endif
+         }
+         if (ecparams) {
+             FreeECParams(ecparams, true);
+         }
+         if (privKey) {
+             FreeECParams(&privKey->ecParams, false);
++#ifndef SYSTEM_NSS
++	    // The entire ECPrivateKey is allocated in the arena
++	    // when using system NSS, so only the in-tree version
++	    // needs to clear these manually.
+             SECITEM_FreeItem(&privKey->version, B_FALSE);
+             SECITEM_FreeItem(&privKey->privateValue, B_FALSE);
+             SECITEM_FreeItem(&privKey->publicValue, B_FALSE);
+             free(privKey);
++#endif
+         }
+ 
+         if (pSeedBuffer) {
+@@ -223,6 +253,13 @@
+         goto cleanup;
+     }
+ 
++#ifdef SYSTEM_NSS
++    if (SECOID_Init() != SECSuccess) {
++	ThrowException(env, INTERNAL_ERROR);
++	goto cleanup;
++    }
++#endif
++
+     // Fill a new ECParams using the supplied OID
+     if (EC_DecodeParams(&params_item, &ecparams, 0) != SECSuccess) {
+         /* bad curve OID */
+@@ -270,6 +307,11 @@
+         if (params_item.data) {
+             env->ReleaseByteArrayElements(encodedParams,
+                 (jbyte *) params_item.data, JNI_ABORT);
++#ifdef SYSTEM_NSS
++	    if (SECOID_Shutdown() != SECSuccess) {
++		ThrowException(env, INTERNAL_ERROR);
++	    }
++#endif
+         }
+         if (privKey.privateValue.data) {
+             env->ReleaseByteArrayElements(privateKey,
+@@ -336,6 +378,13 @@
+         goto cleanup;
+     }
+ 
++#ifdef SYSTEM_NSS
++    if (SECOID_Init() != SECSuccess) {
++	ThrowException(env, INTERNAL_ERROR);
++	goto cleanup;
++    }
++#endif
++
+     // Fill a new ECParams using the supplied OID
+     if (EC_DecodeParams(&params_item, &ecparams, 0) != SECSuccess) {
+         /* bad curve OID */
+@@ -356,9 +405,15 @@
+ 
+ cleanup:
+     {
+-        if (params_item.data)
++        if (params_item.data) {
+             env->ReleaseByteArrayElements(encodedParams,
+                 (jbyte *) params_item.data, JNI_ABORT);
++#ifdef SYSTEM_NSS
++	    if (SECOID_Shutdown() != SECSuccess) {
++		ThrowException(env, INTERNAL_ERROR);
++	    }
++#endif
++	}
+ 
+         if (pubKey.publicValue.data)
+             env->ReleaseByteArrayElements(publicKey,
+@@ -419,6 +474,13 @@
+         goto cleanup;
+     }
+ 
++#ifdef SYSTEM_NSS
++    if (SECOID_Init() != SECSuccess) {
++	ThrowException(env, INTERNAL_ERROR);
++	goto cleanup;
++    }
++#endif
++
+     // Fill a new ECParams using the supplied OID
+     if (EC_DecodeParams(&params_item, &ecparams, 0) != SECSuccess) {
+         /* bad curve OID */
+@@ -460,9 +522,15 @@
+             env->ReleaseByteArrayElements(publicKey,
+                 (jbyte *) publicValue_item.data, JNI_ABORT);
+ 
+-        if (params_item.data)
++        if (params_item.data) {
+             env->ReleaseByteArrayElements(encodedParams,
+                 (jbyte *) params_item.data, JNI_ABORT);
++#ifdef SYSTEM_NSS
++	    if (SECOID_Shutdown() != SECSuccess) {
++		ThrowException(env, INTERNAL_ERROR);
++	    }
++#endif
++	}
+ 
+         if (ecparams)
+             FreeECParams(ecparams, true);

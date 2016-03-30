@@ -37,6 +37,7 @@
 %global build_loop  %{build_loop1} %{build_loop2}
 # note, that order  normal_suffix debug_suffix, in case of both enabled,
 # is expected in one single case at the end of build
+%global rev_build_loop %{build_loop2} %{build_loop1}
 
 %global bootstrap_build 0
 
@@ -82,6 +83,8 @@
 #looks liekopenjdk RPM specific bug
 # Always set this so the nss.cfg file is not broken
 %global NSS_LIBDIR %(pkg-config --variable=libdir nss)
+%global NSS_LIBS %(pkg-config --libs nss)
+%global NSS_CFLAGS %(pkg-config --cflags nss-softokn)
 
 # fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
 %global _privatelibs libmawt[.]so.*
@@ -150,7 +153,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u72-b15
+%global revision        aarch64-jdk8u77-b03
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -768,8 +771,9 @@ URL:      http://openjdk.java.net/
 
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
 # Source from upstream OpenJDK8 project. To regenerate, use
-# VERSION=aarch64-jdk8u71-b15 FILE_NAME_ROOT=${VERSION}
+# VERSION=aarch64-jdk8u77-b03 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
+# where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
 Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Custom README for -src subpackage
@@ -802,6 +806,7 @@ Source101: config.sub
 
 # RPM/distribution specific patches
 
+# Accessibility patches
 # Ignore AWTError when assistive technologies are loaded 
 Patch1:   java-%{javaver}-%{origin}-accessible-toolkit.patch
 
@@ -812,22 +817,35 @@ Patch3: java-atk-wrapper-security.patch
 Patch5: multiple-pkcs11-library-init.patch
 # PR2095, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure (sync with IcedTea 2.x)
 Patch504: rh1163501.patch
-# S4890063, PR2304, RH1214835: HPROF: default text truncated when using doe=n option (upstreaming post-CPU 2015/07)
+# S4890063, PR2304, RH1214835: HPROF: default text truncated when using doe=n option
 Patch511: rh1214835.patch
 # Turn off strict overflow on IndicRearrangementProcessor{,2}.cpp following 8140543: Arrange font actions
 Patch512: no_strict_overflow.patch
+# Support for building the SunEC provider with the system NSS installation
+# PR1983: Support using the system installation of NSS with the SunEC provider
+# PR2127: SunEC provider crashes when built using system NSS
+# PR2815: Race condition in SunEC provider with system NSS
+Patch513: pr1983-jdk.patch
+Patch514: pr1983-root.patch
+Patch515: pr2127.patch
+Patch516: pr2815.patch
  
 # Arch-specific upstreamable patches
 
 Patch98: 004_add-fontconfig.patch
 Patch99: 005_enable-infinality.patch
 
-# JVM heap size changes for s390 (thanks to aph)
+# PR2415: JVM -Xmx requirement is too high on s390
 Patch100: java-%{javaver}-%{origin}-s390-java-opts.patch
 # Type fixing for s390
 Patch102: java-%{javaver}-%{origin}-size_t.patch
 # Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: s390-size_t_format_flags.patch
+
+# AArch64-specific upstreamable patches
+# Remove template in AArch64 port which causes issues with GCC 6
+Patch106: remove_aarch64_template_for_gcc6.patch
+
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
 Patch601: java-1.8.0-openjdk-rh1191652-root.patch
@@ -842,10 +860,17 @@ Patch203: system-lcms.patch
 
 # PR2462: Backport "8074839: Resolve disabled warnings for libunpack and the unpack200 binary"
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
-Patch502: pr2462-01.patch
-Patch503: pr2462-02.patch
+Patch502: pr2462.patch
 # S8140620, PR2769: Find and load default.sf2 as the default soundbank on Linux
+# waiting on upstream: http://mail.openjdk.java.net/pipermail/jdk8u-dev/2016-January/004916.html
 Patch605: soundFontPatch.patch
+# S8148351, PR2842: Only display resolved symlink for compiler, do not change path
+Patch506: pr2842-01.patch
+Patch507: pr2842-02.patch
+# S8150954, RH1176206, PR2866: Taking screenshots on x11 composite desktop produces wrong result
+# In progress: http://mail.openjdk.java.net/pipermail/awt-dev/2016-March/010742.html
+Patch508: rh1176206-jdk.patch
+Patch509: rh1176206-root.patch
 
 # Patches upstream and appearing in 8u76
 # Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
@@ -858,8 +883,6 @@ Patch505: 8143855.patch
 Patch201: system-libjpeg.patch
 
 # Local fixes
-# Turns off ECC support as we don't ship the SunEC provider currently
-Patch12: removeSunEcProvider-RH1154143.patch
 
 # Non-OpenJDK fixes
 Patch300: jstack-pr1845.patch
@@ -888,7 +911,6 @@ BuildRequires: libXtst-devel
 BuildRequires: nss-devel
 BuildRequires: pkgconfig
 BuildRequires: xorg-x11-proto-devel
-#BuildRequires: redhat-lsb
 BuildRequires: zip
 BuildRequires: java-1.8.0-openjdk-devel
 # Zero-assembler build requirement.
@@ -896,6 +918,10 @@ BuildRequires: java-1.8.0-openjdk-devel
 BuildRequires: libffi-devel
 %endif
 BuildRequires: tzdata-java >= 2015d
+# Earlier versions have a bug in tree vectorization on PPC
+BuildRequires: gcc >= 4.8.3-8
+# Build requirements for SunEC system NSS support
+BuildRequires: nss-softokn-freebl-devel >= 3.16.1
 
 # cacerts build requirement.
 BuildRequires: openssl
@@ -1115,17 +1141,17 @@ sh %{SOURCE12}
 %patch3
 %patch5
 %patch7
-%patch12
 
 %patch98 -d jdk8/jdk -p1
 %patch99 -d jdk8/jdk -p1
 
 # s390 build fixes
-%ifarch s390
 %patch100
 %patch102
 %patch103
-%endif
+
+# aarch64 build fixes
+%patch106
 
 # Zero PPC fixes.
 %patch403
@@ -1137,11 +1163,18 @@ sh %{SOURCE12}
 %patch605
 
 %patch502
-%patch503
 %patch504
 %patch505
+%patch506
+%patch507
+%patch508
+%patch509
 %patch511
 %patch512
+%patch513
+%patch514
+%patch515
+%patch516
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -1202,13 +1235,7 @@ export CFLAGS="$CFLAGS -mieee"
 # We use ourcppflags because the OpenJDK build seems to
 # pass these to the HotSpot C++ compiler...
 EXTRA_CFLAGS="%ourcppflags"
-# Disable various optimizations to fix miscompliation. See:
-# - https://bugzilla.redhat.com/show_bug.cgi?id=1120792
-EXTRA_CPP_FLAGS="%ourcppflags -fno-tree-vrp"
-# PPC/PPC64 needs -fno-tree-vectorize since -O3 would
-# otherwise generate wrong code producing segfaults.
 %ifarch %{power64} ppc
-EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-tree-vectorize"
 # fix rpmlint warnings
 EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-strict-aliasing"
 %endif
@@ -1228,6 +1255,8 @@ fi
 mkdir -p %{buildoutputdir $suffix}
 pushd %{buildoutputdir $suffix}
 
+NSS_LIBS="%{NSS_LIBS} -lfreebl" \
+NSS_CFLAGS="%{NSS_CFLAGS}" \
 bash ../../configure \
 %ifnarch %{jit_arches}
     --with-jvm-variants=zero \
@@ -1236,12 +1265,10 @@ bash ../../configure \
     --with-milestone="fcs" \
     --with-update-version=%{updatever} \
     --with-build-number=%{buildver} \
-%ifarch %{aarch64}
-    --with-user-release-suffix="aarch64-%{updatever}-%{buildver}" \
-%endif
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
     --with-debug-level=$debugbuild \
     --enable-unlimited-crypto \
+    --enable-system-nss \
     --with-zlib=system \
     --with-libjpeg=system \
     --with-giflib=system \
@@ -1287,10 +1314,19 @@ export JAVA_HOME=$(pwd)/%{buildoutputdir $suffix}/images/%{j2sdkimage}
 # Install nss.cfg right away as we will be using the JRE above
 install -m 644 %{SOURCE11} $JAVA_HOME/jre/lib/security/
 
-
 # Use system-wide tzdata
 rm $JAVA_HOME/jre/lib/tzdb.dat
 ln -s %{_datadir}/javazi-1.8/tzdb.dat $JAVA_HOME/jre/lib/tzdb.dat
+
+#build cycles
+done
+
+%check
+
+# We test debug first as it will give better diagnostics on a crash
+for suffix in %{rev_build_loop} ; do
+
+export JAVA_HOME=$(pwd)/%{buildoutputdir $suffix}/images/%{j2sdkimage}
 
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
@@ -1322,8 +1358,6 @@ $JAVA_HOME/bin/javap -l java.lang.Object | grep LocalVariableTable
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep "Compiled from"
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LineNumberTable
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LocalVariableTable
-
-#build cycles
 done
 
 %install
@@ -1533,6 +1567,8 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/demo \
   popd
 
 bash %{SOURCE20} $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir $suffix} %{javaver}
+# https://bugzilla.redhat.com/show_bug.cgi?id=1183793
+touch -t 201401010000 $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir $suffix}/lib/security/java.security
 
 # end, dual install
 done
@@ -1699,6 +1735,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Mar 25 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1:1.8.0.77-1.b03
+- Update to u77b03.
+
 * Sun Jan 31 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1:1.8.0.72-1.b15
 - updated to newest Java version.
 

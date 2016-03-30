@@ -1,0 +1,89 @@
+# HG changeset patch
+# User andrew
+# Date 1453863007 0
+#      Wed Jan 27 02:50:07 2016 +0000
+# Node ID f0635543beb309c4da1bb88c906a76ee4b75e16d
+# Parent  4a5a0d4e1ae0feec2f47d17be380d6fcd5eff126
+PR1983: Support using the system installation of NSS with the SunEC provider
+Summary: Add new configure option --enable-system-nss
+
+diff -r 92af9369869f common/autoconf/jdk-options.m4
+--- openjdk/common/autoconf/jdk-options.m4	Thu Jan 21 22:17:02 2016 +0000
++++ openjdk/common/autoconf/jdk-options.m4	Wed Jan 27 05:32:12 2016 +0000
+@@ -414,9 +414,10 @@
+   #
+   AC_DEFUN_ONCE([JDKOPT_DETECT_INTREE_EC],
+   [
+-    AC_MSG_CHECKING([if elliptic curve crypto implementation is present])
++    AC_REQUIRE([LIB_SETUP_MISC_LIBS])
++    AC_MSG_CHECKING([if the elliptic curve crypto implementation is present])
+ 
+-    if test -d "${SRC_ROOT}/jdk/src/share/native/sun/security/ec/impl"; then
++    if test "x${system_nss}" = "xyes" -o -d "${SRC_ROOT}/jdk/src/share/native/sun/security/ec/impl"; then
+       ENABLE_INTREE_EC=yes
+       AC_MSG_RESULT([yes])
+     else
+diff -r 92af9369869f common/autoconf/libraries.m4
+--- openjdk/common/autoconf/libraries.m4	Thu Jan 21 22:17:02 2016 +0000
++++ openjdk/common/autoconf/libraries.m4	Wed Jan 27 05:32:12 2016 +0000
+@@ -731,6 +731,47 @@
+   LIBDL="$LIBS"
+   AC_SUBST(LIBDL)
+   LIBS="$save_LIBS"
++
++  ###############################################################################
++  #
++  # Check for the NSS libraries
++  #
++
++  AC_MSG_CHECKING([whether to build the Sun EC provider against the system NSS libraries])
++
++  # default is bundled
++  DEFAULT_SYSTEM_NSS=no
++
++  AC_ARG_ENABLE([system-nss], [AS_HELP_STRING([--enable-system-nss],
++     [build the SunEC provider using the system NSS libraries @<:@disabled@:>@])],
++  [
++    case "${enableval}" in
++      yes)
++        system_nss=yes
++        ;;
++      *)
++        system_nss=no
++        ;;
++    esac
++  ],
++  [
++    system_nss=${DEFAULT_SYSTEM_NSS}
++  ])
++  AC_MSG_RESULT([$system_nss])
++
++  if test "x${system_nss}" = "xyes"; then
++      PKG_CHECK_MODULES(NSS, nss-softokn >= 3.16.1, [NSS_SOFTOKN_FOUND=yes], [NSS_SOFTOKN_FOUND=no])
++      if test "x${NSS_SOFTOKN_FOUND}" = "xyes"; then
++          NSS_LIBS="$NSS_LIBS -lfreebl";
++	  USE_EXTERNAL_NSS=true
++      else
++	  AC_MSG_ERROR([--enable-system-nss specified, but NSS not found.])
++      fi
++  else
++      USE_EXTERNAL_NSS=false
++  fi
++  AC_SUBST(USE_EXTERNAL_NSS)
++
+ ])
+ 
+ AC_DEFUN_ONCE([LIB_SETUP_STATIC_LINK_LIBSTDCPP],
+diff -r 92af9369869f common/autoconf/spec.gmk.in
+--- openjdk/common/autoconf/spec.gmk.in	Thu Jan 21 22:17:02 2016 +0000
++++ openjdk/common/autoconf/spec.gmk.in	Wed Jan 27 05:32:12 2016 +0000
+@@ -647,6 +647,9 @@
+ # Read-only single-machine data
+ INSTALL_SYSCONFDIR=@sysconfdir@
+ 
++USE_EXTERNAL_NSS:=@USE_EXTERNAL_NSS@
++NSS_LIBS:=@NSS_LIBS@
++NSS_CFLAGS:=@NSS_CFLAGS@
+ 
+ ####################################################
+ #

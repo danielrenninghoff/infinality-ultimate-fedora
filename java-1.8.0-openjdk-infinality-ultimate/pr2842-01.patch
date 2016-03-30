@@ -1,0 +1,22 @@
+# HG changeset patch
+# User mduigou
+# Date 1389723922 28800
+#      Tue Jan 14 10:25:22 2014 -0800
+# Node ID 842cc183c9f6d29270ff002238248978c08f0a66
+# Parent  f0635543beb309c4da1bb88c906a76ee4b75e16d
+8031668, PR2842: TOOLCHAIN_FIND_COMPILER unexpectedly resolves symbolic links
+Reviewed-by: erikj, ihse
+
+diff -r f0635543beb3 -r 842cc183c9f6 common/autoconf/toolchain.m4
+--- openjdk/./common/autoconf/toolchain.m4	Wed Jan 27 02:50:07 2016 +0000
++++ openjdk/./common/autoconf/toolchain.m4	Tue Jan 14 10:25:22 2014 -0800
+@@ -188,8 +188,8 @@
+     $1="$PROPER_COMPILER_$1"
+   else
+     AC_MSG_RESULT([no, keeping $1])
+-    $1="$TEST_COMPILER"
+   fi
++
+   TOOLCHAIN_CHECK_COMPILER_VERSION([$1], [$COMPILER_NAME])
+ ])
+ 

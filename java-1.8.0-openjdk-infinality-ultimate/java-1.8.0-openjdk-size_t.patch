@@ -109,18 +109,6 @@ diff -up jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegion.cpp.size_t jd
    }
  
    int region_size_log = log2_long((jlong) region_size);
-diff -up jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp.size_t jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp
---- jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp.size_t	2015-05-19 12:16:26.000000000 -0400
-+++ jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp	2015-06-09 10:21:39.000000000 -0400
-@@ -833,7 +833,7 @@ OtherRegionsTable::do_cleanup_work(HRRSC
- // This can be done by either mutator threads together with the
- // concurrent refinement threads or GC threads.
- uint HeapRegionRemSet::num_par_rem_sets() {
--  return MAX2(DirtyCardQueueSet::num_par_ids() + ConcurrentG1Refine::thread_num(), (uint)ParallelGCThreads);
-+  return MAX2(DirtyCardQueueSet::num_par_ids() + ConcurrentG1Refine::thread_num(), ParallelGCThreads);
- }
- 
- HeapRegionRemSet::HeapRegionRemSet(G1BlockOffsetSharedArray* bosa,
 diff -up jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp.size_t jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp
 --- jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp.size_t	2015-05-19 12:16:26.000000000 -0400
 +++ jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp	2015-06-09 10:21:39.000000000 -0400
