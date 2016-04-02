@@ -1,6 +1,6 @@
 [infinality-ultimate-noarch]
 name=Infinality Ultimate noarch packages
-baseurl=http://rpm.danielrenninghoff.com/fedora/$releasever/noarch/
+baseurl=http://rpm.danielrenninghoff.com/infinality/fedora/$releasever/noarch/
 enabled=1
 metadata_expire=7d
 gpgcheck=1
@@ -8,7 +8,7 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-dnlrn
 
 [infinality-ultimate]
 name=Infinality Ultimate $basearch packages
-baseurl=http://rpm.danielrenninghoff.com/fedora/$releasever/$basearch/
+baseurl=http://rpm.danielrenninghoff.com/infinality/fedora/$releasever/$basearch/
 enabled=1
 metadata_expire=7d
 gpgcheck=1
@@ -16,7 +16,7 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-dnlrn
 
 [infinality-ultimate-source]
 name=Infinality Ultimate source packages
-baseurl=http://rpm.danielrenninghoff.com/fedora/$releasever/SRPMS/
+baseurl=http://rpm.danielrenninghoff.com/infinality/fedora/$releasever/SRPMS/
 enabled=0
 metadata_expire=7d
 gpgcheck=1

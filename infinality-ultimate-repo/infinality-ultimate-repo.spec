@@ -1,6 +1,6 @@
 Name:           infinality-ultimate-repo
-Version:        23
-Release:        2
+Version:        24
+Release:        1
 Summary:        Infinality Ultimate Repo
 
 Group:          System Environment/Base
@@ -37,6 +37,9 @@ install -d -m755 \
 %config(noreplace) %{_sysconfdir}/yum.repos.d/*
 
 %changelog
+* Fri Apr 01 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 24-1
+- Updated for F24.
+
 * Sun Nov 29 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 23-2
 - Fixed wrong SRPM url.
 
