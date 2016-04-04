@@ -751,7 +751,7 @@ Conflicts: java-%{javaver}-%{origin}-accessibility%{?_isa}
 
 Name:    java-%{javaver}-%{origin}-infinality-ultimate
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -832,6 +832,7 @@ Patch516: pr2815.patch
  
 # Arch-specific upstreamable patches
 
+Patch97: 007_lcd-hrgb-by-default.diff
 Patch98: 004_add-fontconfig.patch
 Patch99: 005_enable-infinality.patch
 
@@ -1144,6 +1145,7 @@ sh %{SOURCE12}
 
 %patch98 -d jdk8/jdk -p1
 %patch99 -d jdk8/jdk -p1
+%patch97 -d jdk8/jdk -p1
 
 # s390 build fixes
 %patch100
@@ -1735,6 +1737,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sat Apr 02 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1:1.8.0.77-2.b03
+- Added small patch.
+
 * Fri Mar 25 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1:1.8.0.77-1.b03
 - Update to u77b03.
 

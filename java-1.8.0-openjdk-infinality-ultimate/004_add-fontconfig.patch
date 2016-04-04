@@ -1,7 +1,7 @@
 diff -rupN a/make/lib/Awt2dLibraries.gmk b/make/lib/Awt2dLibraries.gmk
---- a/make/lib/Awt2dLibraries.gmk	2015-07-13 20:50:59.000000000 +0300
-+++ b/make/lib/Awt2dLibraries.gmk	2015-08-24 12:12:22.930330643 +0300
-@@ -824,7 +824,7 @@
+--- a/make/lib/Awt2dLibraries.gmk	2014-09-14 18:57:10.466023148 +0200
++++ b/make/lib/Awt2dLibraries.gmk	2014-09-14 18:58:11.888148006 +0200
+@@ -824,7 +824,7 @@ $(eval $(call SetupNativeCompilation,BUI
      LDFLAGS := $(subst -Xlinker -z -Xlinker defs,,$(LDFLAGS_JDKLIB)) $(LDFLAGS_CXX_JDK) \
          $(call SET_SHARED_LIBRARY_ORIGIN), \
      LDFLAGS_SUFFIX := $(BUILD_LIBFONTMANAGER_FONTLIB), \
@@ -10,3 +10,4 @@ diff -rupN a/make/lib/Awt2dLibraries.gmk b/make/lib/Awt2dLibraries.gmk
      LDFLAGS_SUFFIX_solaris := -lawt -lawt_headless -lc $(LIBM) $(LIBCXX) -ljava -ljvm, \
      LDFLAGS_SUFFIX_aix := -lawt -lawt_headless $(LIBM) $(LIBCXX) -ljava -ljvm,\
      LDFLAGS_SUFFIX_macosx := -lawt $(LIBM) $(LIBCXX) -undefined dynamic_lookup \
+
