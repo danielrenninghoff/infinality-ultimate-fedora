@@ -1,6 +1,6 @@
 %global source_date 20150728_r37987
 %global tl_version 2015
-%global tl_rel 24
+%global tl_rel 25
 %global tl_release %{tl_rel}.%{source_date}%{?dist}
 %global tl_noarch_release %{tl_rel}%{?dist}
 
@@ -16,6 +16,9 @@ Source2: 90-non-tt-tex-gyre.conf
 Source3: gfsl.txt
 Provides: texlive-tex-gyre = %{version}-%{release}
 Conflicts: texlive-tex-gyre
+
+Provides: tex-gyre-ib-fonts
+Conflicts: tex-gyre-ib-fonts
 
 Provides: tex-tex-gyre = %{tl_version}
 License: GFSL
@@ -1699,6 +1702,9 @@ if [ -e /var/run/texlive/run-mtxrun ]; then export TEXMF=/usr/share/texlive/texm
 %{_texdir}/texmf-dist/tex/latex/tex-gyre/ts1qzc.fd
 
 %changelog
+* Thu Apr 07 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - svn18651.2.004-25
+- Fixed small bug.
+
 * Thu Apr 07 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - svn18651.2.004-24
 - First version
 
