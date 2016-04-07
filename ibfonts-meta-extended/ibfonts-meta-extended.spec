@@ -1,6 +1,6 @@
 Name:           ibfonts-meta-extended
 Version:        1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Meta package for extended infinality fonts
 
 License:        GPL
@@ -11,7 +11,7 @@ Requires:       ibfonts-meta-extended-lt
 Requires:       ddc-uchen-ib-fonts
 Requires:       lohit-gurmukhi-ib-fonts
 Requires:       lohit-odia-ib-fonts
-Requires:       tex-gyre-ib-fonts
+Requires:       texlive-tex-gyre-ib
 Requires:       cursor-ib-fonts
 Requires:       urw-ib-fonts
 Requires:       google-noto-ib-cjk-fonts
@@ -32,5 +32,8 @@ Meta package for extended infinality fonts.
 
 
 %changelog
+* Thu Apr 07 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1-2
+- link to correct tex-gyre.
+
 * Mon Nov 16 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1-1
 - First version.
