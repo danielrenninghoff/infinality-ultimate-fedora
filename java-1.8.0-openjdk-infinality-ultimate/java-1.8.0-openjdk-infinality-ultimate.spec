@@ -37,7 +37,7 @@
 %global build_loop  %{build_loop1} %{build_loop2}
 # note, that order  normal_suffix debug_suffix, in case of both enabled,
 # is expected in one single case at the end of build
-%global rev_build_loop %{build_loop2} %{build_loop1}
+%global rev_build_loop  %{build_loop2} %{build_loop1}
 
 %global bootstrap_build 0
 
@@ -73,7 +73,6 @@
 # We filter out -fexceptions as the HotSpot build explicitly does -fno-exceptions and it's otherwise the default for C++
 %global ourflags %(echo %optflags | sed -e 's|-Wall|-Wformat -Wno-cpp|' | sed -r -e 's|-O[0-9]*||')
 %global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||')
-
 %global ourldflags %{__global_ldflags}
 %endif
 %endif
@@ -467,7 +466,7 @@ fi
 
 alternatives \\
   --install %{_javadocdir}/java javadocdir %{_javadocdir}/%{uniquejavadocdir %%1}/api \\
-  $PRIORITY  --family %{name}
+  $PRIORITY  --family %{name} 
 exit 0
 }
 
@@ -677,8 +676,12 @@ Requires:         %{name}%1 = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(post):   chkconfig >= 1.7
 # Postun requires alternatives to uninstall tool alternatives.
 Requires(postun): %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(postun):   chkconfig >= 1.7
 
 Provides: java-%{javaver}-%{origin}-devel = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-devel%{?_isa} = %{epoch}:%{version}-%{release}
@@ -711,8 +714,12 @@ Obsoletes: java-1.7.0-openjdk-demo%1
 OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
 # Post requires alternatives to install javadoc alternative.
 Requires(post):   %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(post):   chkconfig >= 1.7
 # Postun requires alternatives to uninstall javadoc alternative.
 Requires(postun): %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(postun):   chkconfig >= 1.7
 
 # Standard JPackage javadoc provides.
 Provides: java-javadoc%1 = %{epoch}:%{version}-%{release}
@@ -812,6 +819,7 @@ Patch1:   java-%{javaver}-%{origin}-accessible-toolkit.patch
 
 # Restrict access to java-atk-wrapper classes
 Patch3: java-atk-wrapper-security.patch
+
 # Upstreamable patches
 # PR2737: Allow multiple initialization of PKCS11 libraries
 Patch5: multiple-pkcs11-library-init.patch
@@ -829,7 +837,7 @@ Patch513: pr1983-jdk.patch
 Patch514: pr1983-root.patch
 Patch515: pr2127.patch
 Patch516: pr2815.patch
- 
+
 # Arch-specific upstreamable patches
 
 Patch97: 007_lcd-hrgb-by-default.diff
@@ -849,16 +857,15 @@ Patch106: remove_aarch64_template_for_gcc6.patch
 
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
-Patch601: java-1.8.0-openjdk-rh1191652-root.patch
-Patch602: java-1.8.0-openjdk-rh1191652-jdk.patch
-Patch603: java-1.8.0-openjdk-rh1191652-hotspot-aarch64.patch
+Patch601: java-%{javaver}-%{origin}-rh1191652-root.patch
+Patch602: java-%{javaver}-%{origin}-rh1191652-jdk.patch
+Patch603: java-%{javaver}-%{origin}-rh1191652-hotspot-aarch64.patch
 # Include all sources in src.zip
 Patch7: include-all-srcs.patch
 # 8035341: Allow using a system installed libpng
 Patch202: system-libpng.patch
 # 8042159: Allow using a system-installed lcms2
 Patch203: system-lcms.patch
-
 # PR2462: Backport "8074839: Resolve disabled warnings for libunpack and the unpack200 binary"
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
 Patch502: pr2462.patch
@@ -879,6 +886,7 @@ Patch509: rh1176206-root.patch
 Patch403: rhbz1206656_fix_current_stack_pointer.patch
 # S8143855: Bad printf formatting in frame_zero.cpp 
 Patch505: 8143855.patch
+
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
@@ -1137,7 +1145,6 @@ sh %{SOURCE12}
 %patch202
 %patch203
 
-
 %patch1
 %patch3
 %patch5
@@ -1159,7 +1166,6 @@ sh %{SOURCE12}
 %patch403
 
 %patch603
-
 %patch601
 %patch602
 %patch605
@@ -1235,8 +1241,10 @@ export CFLAGS="$CFLAGS -mieee"
 %endif
 
 # We use ourcppflags because the OpenJDK build seems to
-# pass these to the HotSpot C++ compiler...
-EXTRA_CFLAGS="%ourcppflags"
+# pass EXTRA_CFLAGS to the HotSpot C++ compiler...
+# Explicitly set the C++ standard as the default has changed on GCC >= 6
+EXTRA_CFLAGS="%ourcppflags -std=gnu++98 -Wno-error -fno-delete-null-pointer-checks -fno-lifetime-dse"
+EXTRA_CPP_FLAGS="%ourcppflags -std=gnu++98 -fno-delete-null-pointer-checks -fno-lifetime-dse"
 %ifarch %{power64} ppc
 # fix rpmlint warnings
 EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-strict-aliasing"
@@ -1296,6 +1304,7 @@ make \
     STRIP_POLICY=no_strip \
     POST_STRIP_CMD="" \
     LOG=trace \
+    SCTP_WERROR= \
     %{targets}
 
 # the build (erroneously) removes read permissions from some jars

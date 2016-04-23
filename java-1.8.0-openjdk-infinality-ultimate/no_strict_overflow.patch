@@ -14,4 +14,3 @@ diff -r 1fe56343ecc8 make/lib/Awt2dLibraries.gmk
  $(eval $(call SetupNativeCompilation,BUILD_LIBFONTMANAGER, \
      LIBRARY := fontmanager, \
      OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-
