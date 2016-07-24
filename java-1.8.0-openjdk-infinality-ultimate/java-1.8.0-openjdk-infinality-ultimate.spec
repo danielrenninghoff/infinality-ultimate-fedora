@@ -27,6 +27,13 @@
 %global include_debug_build 0
 %endif
 
+# on intels, we build shenandoah htspot
+%ifarch x86_64
+%global use_shenandoah_hotspot 1
+%else
+%global use_shenandoah_hotspot 0
+%endif
+
 %if %{include_debug_build}
 %global build_loop2 %{debug_suffix}
 %else
@@ -39,7 +46,11 @@
 # is expected in one single case at the end of build
 %global rev_build_loop  %{build_loop2} %{build_loop1}
 
+%ifarch %{jit_arches}
+%global bootstrap_build 1
+%else
 %global bootstrap_build 0
+%endif
 
 %if %{bootstrap_build}
 %global targets bootcycle-images docs
@@ -84,6 +95,13 @@
 %global NSS_LIBDIR %(pkg-config --variable=libdir nss)
 %global NSS_LIBS %(pkg-config --libs nss)
 %global NSS_CFLAGS %(pkg-config --cflags nss-softokn)
+# see https://bugzilla.redhat.com/show_bug.cgi?id=1332456
+%global NSSSOFTOKN_BUILDTIME_NUMBER %(pkg-config --modversion nss-softokn || : )
+%global NSS_BUILDTIME_NUMBER %(pkg-config --modversion nss || : )
+#this is worakround for processing of requires during srpm creation
+%global NSSSOFTOKN_BUILDTIME_VERSION %(if [ "x%{NSSSOFTOKN_BUILDTIME_NUMBER}" == "x" ] ; then echo "" ;else echo ">= %{NSSSOFTOKN_BUILDTIME_NUMBER}" ;fi)
+%global NSS_BUILDTIME_VERSION %(if [ "x%{NSS_BUILDTIME_NUMBER}" == "x" ] ; then echo "" ;else echo ">= %{NSS_BUILDTIME_NUMBER}" ;fi)
+
 
 # fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
 %global _privatelibs libmawt[.]so.*
@@ -152,7 +170,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u77-b03
+%global revision        aarch64-jdk8u92-b14
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -227,7 +245,8 @@ if [ "$1" -gt 1 ]; then
        "${sum}" = 'd17958676bdb9f9d941c8a59655311fb' -o \\
        "${sum}" = '5463aef7dbf0bbcfe79e0336a7f92701' -o \\
        "${sum}" = '400cc64d4dd31f36dc0cc2c701d603db' -o \\
-       "${sum}" = '321342219bb130d238ff144b9e5dbfc1' ]; then
+       "${sum}" = '321342219bb130d238ff144b9e5dbfc1' -o \\
+       "${sum}" = '134a37a84983b620f4d8d51a550c0c38' ]; then
     if [ -f "${javasecurity}.rpmnew" ]; then
       mv -f "${javasecurity}.rpmnew" "${javasecurity}"
     fi
@@ -249,7 +268,7 @@ fi
 
 ext=.gz
 alternatives \\
-  --install %{_bindir}/java java %{jrebindir %%1}/java $PRIORITY  --family %{name} \\
+  --install %{_bindir}/java java %{jrebindir %%1}/java $PRIORITY  --family %{name}.%{_arch} \\
   --slave %{_jvmdir}/jre jre %{_jvmdir}/%{jredir %%1} \\
   --slave %{_jvmjardir}/jre jre_exports %{_jvmjardir}/%{jrelnk %%1} \\
   --slave %{_bindir}/jjs jjs %{jrebindir %%1}/jjs \\
@@ -288,12 +307,12 @@ alternatives \\
 for X in %{origin} %{javaver} ; do
   alternatives \\
     --install %{_jvmdir}/jre-"$X" \\
-    jre_"$X" %{_jvmdir}/%{jredir %%1} $PRIORITY  --family %{name} \\
+    jre_"$X" %{_jvmdir}/%{jredir %%1} $PRIORITY  --family %{name}.%{_arch} \\
     --slave %{_jvmjardir}/jre-"$X" \\
     jre_"$X"_exports %{_jvmdir}/%{jredir %%1}
 done
 
-update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} $PRIORITY  --family %{name} \\
+update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} $PRIORITY  --family %{name}.%{_arch} \\
 --slave %{_jvmjardir}/jre-%{javaver}       jre_%{javaver}_%{origin}_exports      %{jvmjardir %%1}
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
@@ -331,7 +350,7 @@ fi
 
 ext=.gz
 alternatives \\
-  --install %{_bindir}/javac javac %{sdkbindir %%1}/javac $PRIORITY  --family %{name} \\
+  --install %{_bindir}/javac javac %{sdkbindir %%1}/javac $PRIORITY  --family %{name}.%{_arch} \\
   --slave %{_jvmdir}/java java_sdk %{_jvmdir}/%{sdkdir %%1} \\
   --slave %{_jvmjardir}/java java_sdk_exports %{_jvmjardir}/%{sdkdir %%1} \\
   --slave %{_bindir}/appletviewer appletviewer %{sdkbindir %%1}/appletviewer \\
@@ -424,12 +443,12 @@ alternatives \\
 for X in %{origin} %{javaver} ; do
   alternatives \\
     --install %{_jvmdir}/java-"$X" \\
-    java_sdk_"$X" %{_jvmdir}/%{sdkdir %%1} $PRIORITY  --family %{name} \\
+    java_sdk_"$X" %{_jvmdir}/%{sdkdir %%1} $PRIORITY  --family %{name}.%{_arch} \\
     --slave %{_jvmjardir}/java-"$X" \\
     java_sdk_"$X"_exports %{_jvmjardir}/%{sdkdir %%1}
 done
 
-update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir %%1} $PRIORITY  --family %{name} \\
+update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir %%1} $PRIORITY  --family %{name}.%{_arch} \\
 --slave %{_jvmjardir}/java-%{javaver}-%{origin}       java_sdk_%{javaver}_%{origin}_exports      %{_jvmjardir}/%{sdkdir %%1}
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
@@ -466,12 +485,30 @@ fi
 
 alternatives \\
   --install %{_javadocdir}/java javadocdir %{_javadocdir}/%{uniquejavadocdir %%1}/api \\
-  $PRIORITY  --family %{name} 
+  $PRIORITY  --family %{name}
 exit 0
 }
 
 %global postun_javadoc() %{expand:
   alternatives --remove javadocdir %{_javadocdir}/%{uniquejavadocdir %%1}/api
+exit 0
+}
+
+%global post_javadoc_zip() %{expand:
+
+PRIORITY=%{priority}
+if [ "%1" == %{debug_suffix} ]; then
+  let PRIORITY=PRIORITY-1
+fi
+
+alternatives \\
+  --install %{_javadocdir}/java-zip javadoczip %{_javadocdir}/%{uniquejavadocdir %%1}.zip \\
+  $PRIORITY  --family %{name}
+exit 0
+}
+
+%global postun_javadoc_zip() %{expand:
+  alternatives --remove javadoczip %{_javadocdir}/%{uniquejavadocdir %%1}.zip
 exit 0
 }
 
@@ -589,6 +626,12 @@ exit 0
 %doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
 }
 
+%global files_javadoc_zip() %{expand:
+%defattr(-,root,root,-)
+%doc %{_javadocdir}/%{uniquejavadocdir %%1}.zip
+%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
+}
+
 %global files_accessibility() %{expand:
 %{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/libatk-wrapper.so
 %{_jvmdir}/%{jredir %%1}/lib/ext/java-atk-wrapper.jar
@@ -617,6 +660,8 @@ Provides: java-%{origin}%1 = %{epoch}:%{version}-%{release}
 Provides: java%1 = %{epoch}:%{javaver}
 # Standard JPackage extensions provides.
 Provides: java-fonts%1 = %{epoch}:%{version}
+#https://bugzilla.redhat.com/show_bug.cgi?id=1312019
+Provides: /usr/bin/jjs
 
 Obsoletes: java-1.7.0-openjdk%1
 Obsoletes: java-1.5.0-gcj%1
@@ -632,6 +677,9 @@ Requires: javapackages-tools
 Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools
+# there is need to depnd on exact version of nss
+Requires: nss %{NSS_BUILDTIME_VERSION}
+Requires: nss-softokn %{NSSSOFTOKN_BUILDTIME_VERSION}
 # tool to copy jdk's configs - should be Recommends only, but then only dnf/yum eforce it, not rpm transaction and so no configs are persisted when pure rpm -u is run. I t may be consiedered as regression
 Requires:	copy-jdk-configs >= 1.1-3
 OrderWithRequires: copy-jdk-configs
@@ -644,7 +692,6 @@ Requires(postun): %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
 Requires(postun):   chkconfig >= 1.7
 
-Provides: java-%{javaver}-%{origin}-headless = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-headless%{?_isa} = %{epoch}:%{version}-%{release}
 Conflicts: java-%{javaver}-%{origin}-headless%{?_isa}
 # Standard JPackage base provides.
@@ -758,7 +805,7 @@ Conflicts: java-%{javaver}-%{origin}-accessibility%{?_isa}
 
 Name:    java-%{javaver}-%{origin}-infinality-ultimate
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -778,7 +825,7 @@ URL:      http://openjdk.java.net/
 
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
 # Source from upstream OpenJDK8 project. To regenerate, use
-# VERSION=aarch64-jdk8u77-b03 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
+# VERSION=aarch64-jdk8u92-b14 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
 Source0: %{project}-%{repo}-%{revision}.tar.xz
@@ -805,11 +852,16 @@ Source12: java-%{javaver}-%{origin}-remove-intree-libraries.sh
 # Ensure we aren't using the limited crypto policy
 Source13: TestCryptoLevel.java
 
+# Ensure ECDSA is working
+Source14: TestECDSA.java
+
 Source20: repackReproduciblePolycies.sh
 
 # New versions of config files with aarch64 support. This is not upstream yet.
 Source100: config.guess
 Source101: config.sub
+# shenandoah hotpost
+Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u92-b14.tar.xz
 
 # RPM/distribution specific patches
 
@@ -833,10 +885,20 @@ Patch512: no_strict_overflow.patch
 # PR1983: Support using the system installation of NSS with the SunEC provider
 # PR2127: SunEC provider crashes when built using system NSS
 # PR2815: Race condition in SunEC provider with system NSS
+# PR2899: Don't use WithSeed versions of NSS functions as they don't fully process the seed
+# PR2934: SunEC provider throwing KeyException with current NSS
 Patch513: pr1983-jdk.patch
 Patch514: pr1983-root.patch
 Patch515: pr2127.patch
 Patch516: pr2815.patch
+Patch517: pr2899.patch
+Patch518: pr2934.patch
+# S8150954, RH1176206, PR2866: Taking screenshots on x11 composite desktop produces wrong result
+# In progress: http://mail.openjdk.java.net/pipermail/awt-dev/2016-March/010742.html
+Patch508: rh1176206-jdk.patch
+Patch509: rh1176206-root.patch
+# RH1337583, PR2974: PKCS#10 certificate requests now use CRLF line endings rather than system line endings
+Patch523: pr2974-rh1337583.patch
 
 # Arch-specific upstreamable patches
 
@@ -850,10 +912,8 @@ Patch100: java-%{javaver}-%{origin}-s390-java-opts.patch
 Patch102: java-%{javaver}-%{origin}-size_t.patch
 # Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: s390-size_t_format_flags.patch
-
-# AArch64-specific upstreamable patches
-# Remove template in AArch64 port which causes issues with GCC 6
-Patch106: remove_aarch64_template_for_gcc6.patch
+# PR2991, RH1341258: JVM on PPC64 LE crashes due to an illegal instruction in JITed code
+Patch524: pr2991-rh1341258.patch
 
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
@@ -875,23 +935,30 @@ Patch605: soundFontPatch.patch
 # S8148351, PR2842: Only display resolved symlink for compiler, do not change path
 Patch506: pr2842-01.patch
 Patch507: pr2842-02.patch
-# S8150954, RH1176206, PR2866: Taking screenshots on x11 composite desktop produces wrong result
-# In progress: http://mail.openjdk.java.net/pipermail/awt-dev/2016-March/010742.html
-Patch508: rh1176206-jdk.patch
-Patch509: rh1176206-root.patch
 
-# Patches upstream and appearing in 8u76
-# Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
-# 8087120: [GCC5] java.lang.StackOverflowError on Zero JVM initialization on non x86 platforms
-Patch403: rhbz1206656_fix_current_stack_pointer.patch
-# S8143855: Bad printf formatting in frame_zero.cpp 
-Patch505: 8143855.patch
+# Patches upstream and appearing in 8u102
+# S8148752, PR2943, RH1330188: Compiled StringBuilder code throws StringIndexOutOfBoundsException
+Patch519: 8148752-pr2943-rh1330188.patch
+# S6961123, PR2972, RH1339740:  Java application name in GNOME Shell contains funny characters
+Patch520: 6961123-pr2972-rh1339740.patch
+
+# Patches upstream and appearing in 8u112
+# S8044762, PR2960: com/sun/jdi/OptionTest.java test time out
+Patch521: 8044762-pr2960.patch
+# S8049226, PR2960: com/sun/jdi/OptionTest.java test times out again
+Patch522: 8049226-pr2960.patch
+# 8154210: Zero: Better byte behaviour
+Patch606: 8154210.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
 
 # Local fixes
+# see http://mail.openjdk.java.net/pipermail/build-dev/2016-March/016852.html thread
+Patch400: jdk8-archivedJavadoc.patch
+# PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
+Patch525: pr1834-rh1022017.patch
 
 # Non-OpenJDK fixes
 Patch300: jstack-pr1845.patch
@@ -1060,6 +1127,19 @@ BuildArch: noarch
 The OpenJDK API documentation.
 %endif
 
+%if %{include_normal_build}
+%package javadoc-zip
+Summary: OpenJDK API Documentation compressed in single archive
+Group:   Documentation
+Requires: javapackages-tools
+BuildArch: noarch
+
+%{java_javadoc_rpo %{nil}}
+
+%description javadoc-zip
+The OpenJDK API documentation compressed in single archive.
+%endif
+
 %if %{include_debug_build}
 %package javadoc-debug
 Summary: OpenJDK API Documentation %{for_debug}
@@ -1072,6 +1152,20 @@ BuildArch: noarch
 %description javadoc-debug
 The OpenJDK API documentation %{for_debug}.
 %endif
+
+%if %{include_debug_build}
+%package javadoc-zip-debug
+Summary: OpenJDK API Documentation compressed in single archive %{for_debug}
+Group:   Documentation
+Requires: javapackages-tools
+BuildArch: noarch
+
+%{java_javadoc_rpo %{debug_suffix_unquoted}}
+
+%description javadoc-zip-debug
+The OpenJDK API documentation compressed in single archive %{for_debug}.
+%endif
+
 
 %if %{include_normal_build}
 %package accessibility
@@ -1126,6 +1220,15 @@ if [ $prioritylength -ne 7 ] ; then
 fi
 # For old patches
 ln -s openjdk jdk8
+%if %{use_shenandoah_hotspot}
+#on intels, repalce hotpost by shenandoah-able hotspot
+pushd openjdk
+tar -xf %{SOURCE999}
+rm -rf hotspot
+cp -r openjdk/hotspot .
+rm -rf openjdk
+popd
+%endif
 
 cp %{SOURCE2} .
 
@@ -1159,11 +1262,11 @@ sh %{SOURCE12}
 %patch102
 %patch103
 
-# aarch64 build fixes
-%patch106
+# ppc64le fixes
+%patch524
 
-# Zero PPC fixes.
-%patch403
+# Zero fixes.
+%patch606
 
 %patch603
 %patch601
@@ -1172,7 +1275,6 @@ sh %{SOURCE12}
 
 %patch502
 %patch504
-%patch505
 %patch506
 %patch507
 %patch508
@@ -1183,6 +1285,15 @@ sh %{SOURCE12}
 %patch514
 %patch515
 %patch516
+%patch517
+%patch518
+%patch519
+%patch400
+%patch520
+%patch521
+%patch522
+%patch523
+%patch525
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -1307,6 +1418,8 @@ make \
     SCTP_WERROR= \
     %{targets}
 
+make zip-docs
+
 # the build (erroneously) removes read permissions from some jars
 # this is a regression in OpenJDK 7 (our compiler):
 # http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=1437
@@ -1342,6 +1455,10 @@ export JAVA_HOME=$(pwd)/%{buildoutputdir $suffix}/images/%{j2sdkimage}
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
 $JAVA_HOME/bin/java TestCryptoLevel
+
+# Check ECC is working
+$JAVA_HOME/bin/javac -d . %{SOURCE14}
+$JAVA_HOME/bin/java $(echo $(basename %{SOURCE14})|sed "s|\.java||")
 
 # Check debug symbols are present and can identify code
 SERVER_JVM="$JAVA_HOME/jre/lib/%{archinstall}/server/libjvm.so"
@@ -1480,6 +1597,7 @@ popd
 # Install Javadoc documentation.
 install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}
 cp -a %{buildoutputdir $suffix}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir $suffix}
+cp -a %{buildoutputdir $suffix}/bundles/jdk-%{javaver}_%{updatever}$suffix-%{buildver}-docs.zip  $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir $suffix}.zip
 
 # Install icons and menu entries.
 for s in 16 24 32 48 ; do
@@ -1656,6 +1774,12 @@ require "copy_jdk_configs.lua"
 
 %postun javadoc
 %{postun_javadoc %{nil}}
+
+%post javadoc-zip
+%{post_javadoc_zip %{nil}}
+
+%postun javadoc-zip
+%{postun_javadoc_zip %{nil}}
 %endif
 
 %if %{include_debug_build} 
@@ -1688,6 +1812,12 @@ require "copy_jdk_configs.lua"
 
 %postun javadoc-debug
 %{postun_javadoc %{debug_suffix_unquoted}}
+
+%post javadoc-zip-debug
+%{post_javadoc_zip %{debug_suffix_unquoted}}
+
+%postun javadoc-zip-debug
+%{postun_javadoc_zip %{debug_suffix_unquoted}}
 %endif
 
 %if %{include_normal_build} 
@@ -1718,6 +1848,9 @@ require "copy_jdk_configs.lua"
 %files javadoc
 %{files_javadoc %{nil}}
 
+%files javadoc-zip
+%{files_javadoc_zip %{nil}}
+
 %files accessibility
 %{files_accessibility %{nil}}
 %endif
@@ -1740,6 +1873,9 @@ require "copy_jdk_configs.lua"
 
 %files javadoc-debug
 %{files_javadoc %{debug_suffix_unquoted}}
+
+%files javadoc-zip-debug
+%{files_javadoc_zip %{debug_suffix_unquoted}}
 
 %files accessibility-debug
 %{files_accessibility %{debug_suffix_unquoted}}

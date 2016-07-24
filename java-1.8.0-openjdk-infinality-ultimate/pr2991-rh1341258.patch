@@ -1,0 +1,248 @@
+diff -r 3fc29347b27f src/cpu/ppc/vm/ppc.ad
+--- openjdk/hotspot/src/cpu/ppc/vm/ppc.ad	Fri May 20 19:42:15 2016 +0100
++++ openjdk/hotspot/src/cpu/ppc/vm/ppc.ad	Thu Jun 02 17:36:55 2016 +0100
+@@ -2516,8 +2516,13 @@
+     MacroAssembler _masm(&cbuf);
+     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
+     // Operand 'ds' requires 4-alignment.
+-    assert((Idisp & 0x3) == 0, "unaligned offset");
+-    __ ld($dst$$Register, Idisp, $mem$$base$$Register);
++    if (Idisp & 0x3) {
++      __ addi($dst$$Register, $mem$$base$$Register, Idisp);
++      __ ld($dst$$Register, 0, $dst$$Register);
++    } else {
++      __ ld($dst$$Register, Idisp, $mem$$base$$Register);
++      __ nop();
++    }
+   %}
+ 
+   // Load acquire.
+@@ -2526,11 +2531,30 @@
+     MacroAssembler _masm(&cbuf);
+     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
+     // Operand 'ds' requires 4-alignment.
+-    assert((Idisp & 0x3) == 0, "unaligned offset");
+-    __ ld($dst$$Register, Idisp, $mem$$base$$Register);
++    if (Idisp & 0x3) {
++      __ addi($dst$$Register, $mem$$base$$Register, Idisp);
++      __ ld($dst$$Register, 0, $dst$$Register);
++    } else {
++      __ ld($dst$$Register, Idisp, $mem$$base$$Register);
++      __ nop();
++    }
+     __ twi_0($dst$$Register);
+     __ isync();
+   %}
++  
++  enc_class enc_lwa(iRegLdst dst, memoryAlg4 mem) %{
++    // TODO: PPC port $archOpcode(ppc64Opcode_ld);
++    MacroAssembler _masm(&cbuf);
++    int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
++    // Operand 'ds' requires 4-alignment.
++    if (Idisp & 0x3) {
++      __ addi($dst$$Register, $mem$$base$$Register, Idisp);
++      __ lwa($dst$$Register, 0, $dst$$Register);
++    } else {
++      __ lwa($dst$$Register, Idisp, $mem$$base$$Register);
++      __ nop();
++    }
++  %}  
+ 
+   enc_class enc_lfd(RegF dst, memory mem) %{
+     // TODO: PPC port $archOpcode(ppc64Opcode_lfd);
+@@ -2857,8 +2881,13 @@
+     MacroAssembler _masm(&cbuf);
+     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
+     // Operand 'ds' requires 4-alignment.
+-    assert((Idisp & 0x3) == 0, "unaligned offset");
+-    __ std($src$$Register, Idisp, $mem$$base$$Register);
++    if (Idisp & 0x3) {
++      __ addi($src$$Register, $mem$$base$$Register, Idisp);
++      __ std($src$$Register, Idisp, $src$$Register);
++    } else {
++      __ std($src$$Register, Idisp, $mem$$base$$Register);
++      __ nop();
++    }
+   %}
+ 
+   enc_class enc_stfs(RegF src, memory mem) %{
+@@ -5467,12 +5496,8 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "LWA     $dst, $mem \t// loadI2L" %}
+-  size(4);
+-  ins_encode %{
+-    // TODO: PPC port $archOpcode(ppc64Opcode_lwa);
+-    int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
+-    __ lwa($dst$$Register, Idisp, $mem$$base$$Register);
+-  %}
++  size(8);
++  ins_encode( enc_lwa(dst, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+ 
+@@ -5484,11 +5509,18 @@
+   format %{ "LWA     $dst, $mem \t// loadI2L acquire"
+             "TWI     $dst\n\t"
+             "ISYNC" %}
+-  size(12);
++  size(16);
+   ins_encode %{
+     // TODO: PPC port $archOpcode(ppc64Opcode_lwa);
+     int Idisp = $mem$$disp + frame_slots_bias($mem$$base, ra_);
+-    __ lwa($dst$$Register, Idisp, $mem$$base$$Register);
++    // Operand 'ds' requires 4-alignment.
++    if (Idisp & 0x3) {
++      __ addi($dst$$Register, $mem$$base$$Register, Idisp);
++      __ lwa($dst$$Register, 0, $dst$$Register);
++    } else {
++      __ lwa($dst$$Register, Idisp, $mem$$base$$Register);
++      __ nop();
++    }
+     __ twi_0($dst$$Register);
+     __ isync();
+   %}
+@@ -5502,7 +5534,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "LD      $dst, $mem \t// long" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_ld(dst, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -5515,7 +5547,7 @@
+   format %{ "LD      $dst, $mem \t// long acquire\n\t"
+             "TWI     $dst\n\t"
+             "ISYNC" %}
+-  size(12);
++  size(16);
+   ins_encode( enc_ld_ac(dst, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -5527,7 +5559,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "LD      $dst, $mem \t// unaligned long" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_ld(dst, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -5541,7 +5573,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "LD      $dst, $mem \t// load 8-byte Vector" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_ld(dst, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -5601,7 +5633,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "LD      $dst, $mem \t// ptr" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_ld(dst, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -5614,7 +5646,7 @@
+   format %{ "LD      $dst, $mem \t// ptr acquire\n\t"
+             "TWI     $dst\n\t"
+             "ISYNC" %}
+-  size(12);
++  size(16);
+   ins_encode( enc_ld_ac(dst, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -5626,7 +5658,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "LD      $dst, $mem \t// ptr + p2x" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_ld(dst, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -5648,7 +5680,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "LD      $dst, $mem \t// klass ptr" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_ld(dst, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -6521,7 +6553,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "STD     $src, $mem \t// long" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_std(src, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -6535,7 +6567,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "STD     $mem, $src \t// packed8B" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_std(src, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -6568,7 +6600,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "STD     $src, $dst \t// ptr" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_std(src, dst) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -7521,7 +7553,7 @@
+   format %{ "LD      $dst, $mem \t// loadPLocked\n\t"
+             "TWI     $dst\n\t"
+             "ISYNC" %}
+-  size(12);
++  size(16);
+   ins_encode( enc_ld_ac(dst, mem) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -9287,7 +9319,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "LD      $dst, $src \t// long" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_ld(dst, src) );
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -9298,7 +9330,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "STD     $src, $dst \t// long" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_std(src, dst) ); // rs=rt
+   ins_pipe(pipe_class_memory);
+ %}
+@@ -9372,7 +9404,7 @@
+ instruct moveD2L_stack_reg(iRegLdst dst, stackSlotD src) %{
+   match(Set dst (MoveD2L src));
+   ins_cost(MEMORY_REF_COST);
+-  size(4);
++  size(8);
+   format %{ "LD      $dst, $src \t// MoveD2L" %}
+   ins_encode( enc_ld(dst, src) );
+   ins_pipe(pipe_class_memory);
+@@ -9407,7 +9439,7 @@
+   ins_cost(MEMORY_REF_COST);
+ 
+   format %{ "STD     $src, $dst \t// MoveL2D" %}
+-  size(4);
++  size(8);
+   ins_encode( enc_std(src, dst) );
+   ins_pipe(pipe_class_memory);
+ %}

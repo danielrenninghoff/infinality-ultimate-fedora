@@ -1,0 +1,23 @@
+# HG changeset patch
+# User andrew
+# Date 1459313680 -3600
+#      Wed Mar 30 05:54:40 2016 +0100
+# Node ID 9dc0eca5fa8926e6a952fa4f1931e78aa1f52443
+# Parent  8957aff589013e671f02d38023d5ff245ef27e87
+PR2899: Don't use WithSeed versions of NSS functions as they don't fully process the seed
+Contributed-by: Alex Kashchenko <akashche@redhat.com>
+
+diff -r 8957aff58901 -r 9dc0eca5fa89 src/share/native/sun/security/ec/ecc_impl.h
+--- openjdk/jdk/src/share/native/sun/security/ec/ecc_impl.h	Wed Mar 30 04:48:56 2016 +0100
++++ openjdk/jdk/src/share/native/sun/security/ec/ecc_impl.h	Wed Mar 30 05:54:40 2016 +0100
+@@ -267,8 +267,8 @@
+ 
+ #ifdef SYSTEM_NSS
+ #define EC_DecodeParams(a,b,c) EC_DecodeParams(a,b)
+-#define EC_NewKey(a,b,c,d,e) EC_NewKeyFromSeed(a,b,c,d)
+-#define ECDSA_SignDigest(a,b,c,d,e,f) ECDSA_SignDigestWithSeed(a,b,c,d,e)
++#define EC_NewKey(a,b,c,d,e) EC_NewKey(a,b)
++#define ECDSA_SignDigest(a,b,c,d,e,f) ECDSA_SignDigest(a,b,c)
+ #define ECDSA_VerifyDigest(a,b,c,d) ECDSA_VerifyDigest(a,b,c)
+ #define ECDH_Derive(a,b,c,d,e,f) ECDH_Derive(a,b,c,d,e)
+ #else

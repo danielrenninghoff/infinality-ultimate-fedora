@@ -1,0 +1,68 @@
+--- jdk8/make/Javadoc.gmk	2016-04-01 16:53:41.069477682 +0200
++++ jdk8/make/Javadoc.gmk	2016-04-01 16:53:41.014477059 +0200
+@@ -220,6 +220,12 @@
+ JRE_API_DOCSDIR = $(DOCSDIR)/jre/api
+ PLATFORM_DOCSDIR = $(DOCSDIR)/platform
+ 
++
++JAVADOC_ARCHIVE_NAME := jdk-$(FULL_VERSION)-docs.zip
++JAVADOC_ARCHIVE_ASSEMBLY_DIR :=  $(DOCSTMPDIR)/zip-docs
++JAVADOC_ARCHIVE_DIR := $(OUTPUT_ROOT)/bundles
++JAVADOC_ARCHIVE := $(JAVADOC_ARCHIVE_DIR)/$(JAVADOC_ARCHIVE_NAME)
++
+ # The non-core api javadocs need to be able to access the root of the core
+ # api directory, so for jdk/api or jre/api to get to the core api/
+ # directory we would use this:
+@@ -319,6 +325,37 @@
+ all: docs
+ docs: coredocs otherdocs
+ 
++#
++# Optional target which bundles all generated javadocs into a zip 
++# archive. The dependency on docs is handled in Main.gmk. Incremental 
++# building of docs is currently broken so if you invoke zip-docs after 
++# docs, the docs are always rebuilt.
++#
++
++zip-docs: $(JAVADOC_ARCHIVE)
++
++#
++# Add the core docs as prerequisite to the archive to trigger a rebuild
++# if the core docs were rebuilt. Ideally any doc rebuild should trigger
++# this, but the way prerequisites are currently setup in this file, that
++# is hard to achieve.
++#
++
++$(JAVADOC_ARCHIVE): $(COREAPI_INDEX_FILE)
++	@$(ECHO) "Compressing javadoc to single $(JAVADOC_ARCHIVE_NAME)" ; 
++	$(MKDIR) -p $(JAVADOC_ARCHIVE_DIR) ;
++	$(RM) -r $(JAVADOC_ARCHIVE_ASSEMBLY_DIR) ;
++	$(MKDIR) -p $(JAVADOC_ARCHIVE_ASSEMBLY_DIR);
++	all_roots=`$(FIND) $(DOCSDIR) | $(GREP) index.html `; \
++	pushd $(JAVADOC_ARCHIVE_ASSEMBLY_DIR); \
++	for index_file in $${all_roots} ; do \
++	  target_dir=`dirname $${index_file}`; \
++	  name=`$(ECHO) $${target_dir} | $(SED) "s;/spec;;" | $(SED) "s;.*/;;"`; \
++	  $(LN) -s $${target_dir}  $${name}; \
++	done; \
++	$(ZIP) -q -r $(JAVADOC_ARCHIVE) * ; \
++	popd ;
++
+ #################################################################
+ # Production Targets -- USE THESE TARGETS WHEN:
+ # a) You're generating docs outside of release engineering's
+--- jdk8/make/Main.gmk	2016-04-01 16:53:41.311480424 +0200
++++ jdk8/make/Main.gmk	2016-04-01 16:53:41.266479914 +0200
+@@ -165,6 +165,12 @@
+ 	@($(CD) $(SRC_ROOT)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f Javadoc.gmk docs)
+ 	@$(call TargetExit)
+ 
++zip-docs: docs zip-docs-only
++zip-docs-only: start-make
++	@$(call TargetEnter)
++	@($(CD) $(SRC_ROOT)/make && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f Javadoc.gmk zip-docs)
++	@$(call TargetExit)
++
+ sign-jars: jdk sign-jars-only
+ sign-jars-only: start-make
+ 	@$(call TargetEnter)
