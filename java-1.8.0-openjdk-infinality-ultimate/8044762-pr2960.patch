@@ -1,0 +1,45 @@
+# HG changeset patch
+# User dsamersoff
+# Date 1403087398 25200
+#      Wed Jun 18 03:29:58 2014 -0700
+# Node ID 13411144d46b50d0087f35eca2b8e827aae558f1
+# Parent  10c9f8461c297a200ef57970c1f4c32d4081d790
+8044762, PR2960: com/sun/jdi/OptionTest.java test time out
+Summary: gdata could be NULL in debugInit_exit
+Reviewed-by: dcubed
+
+diff -r 10c9f8461c29 -r 13411144d46b src/share/back/debugInit.c
+--- openjdk/jdk/src/share/back/debugInit.c	Fri May 20 19:42:05 2016 +0100
++++ openjdk/jdk/src/share/back/debugInit.c	Wed Jun 18 03:29:58 2014 -0700
+@@ -1307,22 +1307,26 @@
+     if ( error != JVMTI_ERROR_NONE ) {
+         exit_code = 1;
+         if ( docoredump ) {
++            LOG_MISC(("Dumping core as requested by command line"));
+             finish_logging(exit_code);
+             abort();
+         }
+     }
++
+     if ( msg==NULL ) {
+         msg = "";
+     }
+ 
+     LOG_MISC(("Exiting with error %s(%d): %s", jvmtiErrorText(error), error, msg));
+ 
+-    gdata->vmDead = JNI_TRUE;
++    if (gdata != NULL) {
++        gdata->vmDead = JNI_TRUE;
+ 
+-    /* Let's try and cleanup the JVMTI, if we even have one */
+-    if ( gdata->jvmti != NULL ) {
+-        /* Dispose of jvmti (gdata->jvmti becomes NULL) */
+-        disposeEnvironment(gdata->jvmti);
++        /* Let's try and cleanup the JVMTI, if we even have one */
++        if ( gdata->jvmti != NULL ) {
++            /* Dispose of jvmti (gdata->jvmti becomes NULL) */
++            disposeEnvironment(gdata->jvmti);
++        }
+     }
+ 
+     /* Finish up logging. We reach here if JDWP is doing the exiting. */

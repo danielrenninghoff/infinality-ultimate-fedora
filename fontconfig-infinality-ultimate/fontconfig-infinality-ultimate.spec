@@ -3,7 +3,7 @@
 Summary:	Font configuration and customization library
 Name:		fontconfig-infinality-ultimate
 Version:	2.11.94
-Release:	4%{?dist}
+Release:	5%{?dist}
 # src/ftglue.[ch] is in Public Domain
 # src/fccache.c contains Public Domain code
 # fc-case/CaseFolding.txt is in the UCD
@@ -174,6 +174,9 @@ fi
 %doc fontconfig-devel.txt fontconfig-devel
 
 %changelog
+* Sun Jul 24 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.11.94-5
+Fixed wrong path in fc-presets file
+
 * Wed Nov 25 2015 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 2.11.94-4
 - fixed fc-presets to use /usr/share/fontconfig/
 

@@ -1,0 +1,123 @@
+# HG changeset patch
+# User dsamersoff
+# Date 1409228402 25200
+#      Thu Aug 28 05:20:02 2014 -0700
+# Node ID f4c9545cd8a56a5fab74c95de3573623ba2b83c4
+# Parent  13411144d46b50d0087f35eca2b8e827aae558f1
+8049226, PR2960: com/sun/jdi/OptionTest.java test times out again
+Summary: Don't call jni_FatalError if transport initialization fails
+Reviewed-by: sspitsyn, sla
+
+diff -r 13411144d46b -r f4c9545cd8a5 src/share/back/debugInit.c
+--- openjdk/jdk/src/share/back/debugInit.c	Wed Jun 18 03:29:58 2014 -0700
++++ openjdk/jdk/src/share/back/debugInit.c	Thu Aug 28 05:20:02 2014 -0700
+@@ -1013,7 +1013,7 @@
+ atexit_finish_logging(void)
+ {
+     /* Normal exit(0) (not _exit()) may only reach here */
+-    finish_logging(0);  /* Only first call matters */
++    finish_logging();  /* Only first call matters */
+ }
+ 
+ static jboolean
+@@ -1301,43 +1301,49 @@
+ void
+ debugInit_exit(jvmtiError error, const char *msg)
+ {
+-    int exit_code = 0;
++    enum exit_codes { EXIT_NO_ERRORS = 0, EXIT_JVMTI_ERROR = 1, EXIT_TRANSPORT_ERROR = 2 };
+ 
+-    /* Pick an error code */
+-    if ( error != JVMTI_ERROR_NONE ) {
+-        exit_code = 1;
+-        if ( docoredump ) {
+-            LOG_MISC(("Dumping core as requested by command line"));
+-            finish_logging(exit_code);
+-            abort();
+-        }
++    // Prepare to exit. Log error and finish logging
++    LOG_MISC(("Exiting with error %s(%d): %s", jvmtiErrorText(error), error,
++                                               ((msg == NULL) ? "" : msg)));
++
++    // coredump requested by command line. Keep JVMTI data dirty
++    if (error != JVMTI_ERROR_NONE && docoredump) {
++        LOG_MISC(("Dumping core as requested by command line"));
++        finish_logging();
++        abort();
+     }
+ 
+-    if ( msg==NULL ) {
+-        msg = "";
+-    }
++    finish_logging();
+ 
+-    LOG_MISC(("Exiting with error %s(%d): %s", jvmtiErrorText(error), error, msg));
+-
++    // Cleanup the JVMTI if we have one
+     if (gdata != NULL) {
+         gdata->vmDead = JNI_TRUE;
+-
+-        /* Let's try and cleanup the JVMTI, if we even have one */
+-        if ( gdata->jvmti != NULL ) {
+-            /* Dispose of jvmti (gdata->jvmti becomes NULL) */
++        if (gdata->jvmti != NULL) {
++            // Dispose of jvmti (gdata->jvmti becomes NULL)
+             disposeEnvironment(gdata->jvmti);
+         }
+     }
+ 
+-    /* Finish up logging. We reach here if JDWP is doing the exiting. */
+-    finish_logging(exit_code);  /* Only first call matters */
+-
+-    /* Let's give the JNI a FatalError if non-exit 0, which is historic way */
+-    if ( exit_code != 0 ) {
+-        JNIEnv *env = NULL;
+-        jniFatalError(env, msg, error, exit_code);
++    // We are here with no errors. Kill entire process and exit with zero exit code
++    if (error == JVMTI_ERROR_NONE) {
++        forceExit(EXIT_NO_ERRORS);
++        return;
+     }
+ 
+-    /* Last chance to die, this kills the entire process. */
+-    forceExit(exit_code);
++    // No transport initilized.
++    // As we don't have any details here exiting with separate exit code
++    if (error == AGENT_ERROR_TRANSPORT_INIT) {
++        forceExit(EXIT_TRANSPORT_ERROR);
++        return;
++    }
++
++    // We have JVMTI error. Call hotspot jni_FatalError handler
++    jniFatalError(NULL, msg, error, EXIT_JVMTI_ERROR);
++
++    // hotspot calls os:abort() so we should never reach code below,
++    // but guard against possible hotspot changes
++
++    // Last chance to die, this kills the entire process.
++    forceExit(EXIT_JVMTI_ERROR);
+ }
+diff -r 13411144d46b -r f4c9545cd8a5 src/share/back/log_messages.c
+--- openjdk/jdk/src/share/back/log_messages.c	Wed Jun 18 03:29:58 2014 -0700
++++ openjdk/jdk/src/share/back/log_messages.c	Thu Aug 28 05:20:02 2014 -0700
+@@ -230,7 +230,7 @@
+ 
+ /* Finish up logging, flush output to the logfile. */
+ void
+-finish_logging(int exit_code)
++finish_logging()
+ {
+ #ifdef JDWP_LOGGING
+     MUTEX_LOCK(my_mutex);
+diff -r 13411144d46b -r f4c9545cd8a5 src/share/back/log_messages.h
+--- openjdk/jdk/src/share/back/log_messages.h	Wed Jun 18 03:29:58 2014 -0700
++++ openjdk/jdk/src/share/back/log_messages.h	Thu Aug 28 05:20:02 2014 -0700
+@@ -29,7 +29,7 @@
+ /* LOG: Must be called like:  LOG_category(("anything")) or LOG_category((format,args)) */
+ 
+ void setup_logging(const char *, unsigned);
+-void finish_logging(int);
++void finish_logging();
+ 
+ #define LOG_NULL ((void)0)
+ 

@@ -1,0 +1,90 @@
+# HG changeset patch
+# User andrew
+# Date 1461349033 -3600
+#      Fri Apr 22 19:17:13 2016 +0100
+# Node ID dab76de2f91cf1791c03560a3f45aaa69f8351fd
+# Parent  3fa42705acab6d69b6141f47ebba4f85739a338c
+PR2934: SunEC provider throwing KeyException with current NSS
+Summary: Initialise the random number generator and feed the seed to it.
+
+diff -r 3fa42705acab -r dab76de2f91c src/share/native/sun/security/ec/ECC_JNI.cpp
+--- openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp	Wed Apr 20 03:39:11 2016 +0100
++++ openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp	Fri Apr 22 19:17:13 2016 +0100
+@@ -134,8 +134,17 @@
+     env->GetByteArrayRegion(seed, 0, jSeedLength, pSeedBuffer);
+ 
+     // Generate the new keypair (using the supplied seed)
++#ifdef SYSTEM_NSS
++    if (RNG_RandomUpdate((unsigned char *) pSeedBuffer, jSeedLength)
++	!= SECSuccess) {
++	ThrowException(env, KEY_EXCEPTION);
++	goto cleanup;
++    }
++    if (EC_NewKey(ecparams, &privKey) != SECSuccess) {
++#else
+     if (EC_NewKey(ecparams, &privKey, (unsigned char *) pSeedBuffer,
+         jSeedLength, 0) != SECSuccess) {
++#endif
+         ThrowException(env, KEY_EXCEPTION);
+         goto cleanup;
+     }
+@@ -267,8 +276,18 @@
+     env->GetByteArrayRegion(seed, 0, jSeedLength, pSeedBuffer);
+ 
+     // Sign the digest (using the supplied seed)
++#ifdef SYSTEM_NSS
++    if (RNG_RandomUpdate((unsigned char *) pSeedBuffer, jSeedLength)
++	!= SECSuccess) {
++	ThrowException(env, KEY_EXCEPTION);
++	goto cleanup;
++    }
++    if (ECDSA_SignDigest(&privKey, &signature_item, &digest_item)
++	!= SECSuccess) {
++#else
+     if (ECDSA_SignDigest(&privKey, &signature_item, &digest_item,
+         (unsigned char *) pSeedBuffer, jSeedLength, 0) != SECSuccess) {
++#endif
+         ThrowException(env, KEY_EXCEPTION);
+         goto cleanup;
+     }
+@@ -499,6 +518,9 @@
+     if (SECOID_Init() != SECSuccess) {
+ 	ThrowException(env, INTERNAL_ERROR);
+     }
++    if (RNG_RNGInit() != SECSuccess) {
++	ThrowException(env, INTERNAL_ERROR);
++    }
+ #endif
+ }
+ 
+@@ -507,6 +529,7 @@
+   (JNIEnv *env, jclass UNUSED(clazz))
+ {
+ #ifdef SYSTEM_NSS
++    RNG_RNGShutdown();
+     if (SECOID_Shutdown() != SECSuccess) {
+ 	ThrowException(env, INTERNAL_ERROR);
+     }
+diff -r 3fa42705acab -r dab76de2f91c src/share/native/sun/security/ec/ecc_impl.h
+--- openjdk/jdk/src/share/native/sun/security/ec/ecc_impl.h	Wed Apr 20 03:39:11 2016 +0100
++++ openjdk/jdk/src/share/native/sun/security/ec/ecc_impl.h	Fri Apr 22 19:17:13 2016 +0100
+@@ -254,8 +254,10 @@
+  This function is no longer required because the random bytes are now
+  supplied by the caller. Force a failure.
+ */
++#ifndef SYSTEM_NSS
+ #define RNG_GenerateGlobalRandomBytes(p,l) SECFailure
+ #endif
++#endif
+ #define CHECK_MPI_OK(func) if (MP_OKAY > (err = func)) goto cleanup
+ #define MP_TO_SEC_ERROR(err)
+ 
+@@ -267,8 +269,6 @@
+ 
+ #ifdef SYSTEM_NSS
+ #define EC_DecodeParams(a,b,c) EC_DecodeParams(a,b)
+-#define EC_NewKey(a,b,c,d,e) EC_NewKey(a,b)
+-#define ECDSA_SignDigest(a,b,c,d,e,f) ECDSA_SignDigest(a,b,c)
+ #define ECDSA_VerifyDigest(a,b,c,d) ECDSA_VerifyDigest(a,b,c)
+ #define ECDH_Derive(a,b,c,d,e,f) ECDH_Derive(a,b,c,d,e)
+ #else
