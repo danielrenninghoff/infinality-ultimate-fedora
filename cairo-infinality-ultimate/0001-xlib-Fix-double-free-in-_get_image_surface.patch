@@ -1,0 +1,59 @@
+From d69dd6b341594c338fa6c7b327fd7f201eb37bc1 Mon Sep 17 00:00:00 2001
+From: Uli Schlachter <psychon@znc.in>
+Date: Sat, 18 Jun 2016 15:08:52 +0200
+Subject: [PATCH] xlib: Fix double free in _get_image_surface()
+
+If XShmGetImage() fails, the code tries to continue with its normal,
+non-shared-memory path. However, the image variable, which was previously set to
+NULL, now points to an already-destroyed surface, causing a double-free when the
+function cleans up after itself (actually, its an assertion failure because the
+reference count of the surface is zero, but technically this is still a double
+free).
+
+Fix this by setting image=NULL after destroying the surface that this refers to,
+to make sure this surface will not be destroyed again.
+
+While we are here (multiple changes in a single commit are bad...), also fix the
+cleanup done in bail. In practice, &image->base should be safe when image==NULL,
+because this just adds some offset to the pointer (the offset here is actually
+zero, so this doesn't do anything at all). However, the C standard does not
+require this to be safe, so let's handle this case specially.
+
+Note that anything that is fixed by this change is still buggy, because the only
+reason why XShmGetImage() could fail would be BadDrawable, meaning that the
+target we draw to does not exist or was already destroyed. This patch will
+likely just cause X11 errors elsewhere and drawing to (possible) invalid
+drawables is not supported by cairo anyway. This means that if SHM fails, the
+following fallback code has a high chance of failing, too.
+
+Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=91967
+Signed-off-by: Uli Schlachter <psychon@znc.in>
+---
+ src/cairo-xlib-surface.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/cairo-xlib-surface.c b/src/cairo-xlib-surface.c
+index 3f407c3..555c1fe 100644
+--- a/src/cairo-xlib-surface.c
++++ b/src/cairo-xlib-surface.c
+@@ -807,6 +807,7 @@ _get_image_surface (cairo_xlib_surface_t    *surface,
+ 	    }
+ 
+ 	    cairo_surface_destroy (&image->base);
++	    image = NULL;
+ 	}
+     }
+ 
+@@ -1011,7 +1012,8 @@ _get_image_surface (cairo_xlib_surface_t    *surface,
+     cairo_device_release (&display->base);
+ 
+     if (unlikely (status)) {
+-	cairo_surface_destroy (&image->base);
++	if (image)
++	    cairo_surface_destroy (&image->base);
+ 	return _cairo_surface_create_in_error (status);
+     }
+ 
+-- 
+2.7.4
+

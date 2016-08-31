@@ -5,17 +5,17 @@
 Summary:	A 2D graphics library
 Name:		cairo-infinality-ultimate
 Version:	1.14.6
-Release:	1%{?dist}
+Release:	2%{?dist}
 URL:		http://cairographics.org
 Source0:	http://cairographics.org/releases/cairo-%{version}.tar.xz
 License:	LGPLv2 or MPLv1.1
-Group:		System Environment/Libraries
 
 Patch0:         cairo-multilib.patch
 Patch1:         cairo-respect-fontconfig_pb.patch
 Patch2:         cairo-server-side-gradients.patch
 Patch3:         cairo-webkit-html5-fix.patch
 Patch4:         cairo-make-lcdfilter-default.patch
+Patch5:         0001-xlib-Fix-double-free-in-_get_image_surface.patch
 
 BuildRequires: pkgconfig
 BuildRequires: libXrender-devel
@@ -46,7 +46,6 @@ through the X Render Extension or OpenGL).
 
 %package devel
 Summary: Development files for cairo
-Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Provides: cairo-devel = %{version}-%{release}
 Provides: cairo-devel%{?_isa} = %{version}-%{release}
@@ -61,7 +60,6 @@ needed for developing software which uses the cairo graphics library.
 
 %package gobject
 Summary: GObject bindings for cairo
-Group: System Environment/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Provides: cairo-gobject = %{version}-%{release}
 Provides: cairo-gobject%{?_isa} = %{version}-%{release}
@@ -76,7 +74,6 @@ integrate well with the GObject object system used by GNOME.
 
 %package gobject-devel
 Summary: Development files for cairo-gobject
-Group: Development/Libraries
 Requires: %{name}-devel%{?_isa} = %{version}-%{release}
 Requires: %{name}-gobject%{?_isa} = %{version}-%{release}
 Provides: cairo-gobject-devel = %{version}-%{release}
@@ -92,7 +89,6 @@ needed for developing software which uses the cairo Gobject library.
 
 %package tools
 Summary: Development tools for cairo
-Group: Development/Tools
 Provides: cairo-tools = %{version}-%{release}
 Provides: cairo-tools%{?_isa} = %{version}-%{release}
 Conflicts: cairo-tools%{?_isa}
@@ -106,6 +102,7 @@ This package contains tools for working with the cairo graphics library.
 
 %prep
 %setup -q -n cairo-%{version}
+%patch5 -p1
 %patch0 -p1 -b .multilib
 %patch4 -p1
 %patch1 -p1
@@ -129,7 +126,7 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 make V=1 %{?_smp_mflags}
 
 %install
-make install V=1 DESTDIR=$RPM_BUILD_ROOT
+%make_install
 rm $RPM_BUILD_ROOT%{_libdir}/*.la
 
 %post -p /sbin/ldconfig
@@ -196,6 +193,9 @@ rm $RPM_BUILD_ROOT%{_libdir}/*.la
 %{_libdir}/cairo/
 
 %changelog
+* Tue Aug 09 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1.14.6-2
+- spec file cleanups.
+
 * Wed Mar 30 2016 Daniel Renninghoff <daniel.renninghoff@gmail.com> - 1.14.6-1
 - updated to 1.14.6.
 
