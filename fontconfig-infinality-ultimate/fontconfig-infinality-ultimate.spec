@@ -2,8 +2,8 @@
 
 Summary:	Font configuration and customization library
 Name:		fontconfig-infinality-ultimate
-Version:	2.11.94
-Release:	5%{?dist}
+Version:	2.12.1
+Release:	1%{?dist}
 # src/ftglue.[ch] is in Public Domain
 # src/fccache.c contains Public Domain code
 # fc-case/CaseFolding.txt is in the UCD
@@ -17,13 +17,11 @@ Source2:	presets.tar.bz2
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=140335
 Patch0:		fontconfig-sleep-less.patch
-# https://bugzilla.redhat.com/show_bug.cgi?id=1236034
-Patch1:		fontconfig-lock-cache.patch
-Patch3: 	01-configure.patch
-Patch4: 	02-configure.ac.patch
-Patch5: 	03-Makefile.in.patch
-Patch6: 	04-Makefile.conf.d.patch
-Patch7: 	05-Makefile.am.in.patch
+Patch2: 	01-configure.patch
+Patch3: 	02-configure.ac.patch
+Patch4: 	03-Makefile.in.patch
+Patch5: 	04-Makefile.conf.d.patch
+Patch6: 	05-Makefile.am.in.patch
 
 BuildRequires:	expat-devel
 BuildRequires:	freetype-devel >= %{freetype_version}
@@ -77,12 +75,11 @@ which is useful for developing applications that uses fontconfig.
 cd ..
 %setup -q -a 1 -n fontconfig-%{version}
 %patch0 -p1 -b .sleep-less
-%patch1 -p1 -b .lock-cache
+%patch2 -p1
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
-%patch7 -p1
 
 aclocal
 libtoolize -f

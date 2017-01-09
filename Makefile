@@ -1,4 +1,4 @@
-BASE = fedora-24
+BASE = fedora-25
 DIRS = $(wildcard */)
 
 define makerpm =

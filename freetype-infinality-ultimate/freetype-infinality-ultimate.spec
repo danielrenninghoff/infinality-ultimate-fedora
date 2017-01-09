@@ -2,7 +2,7 @@
 
 Summary: A free and portable font rendering engine
 Name: freetype-infinality-ultimate
-Version: 2.6.3
+Version: 2.7.1
 Release: 1%{?dist}
 License: (FTL or GPLv2+) and BSD and MIT and Public Domain and zlib with acknowledgement
 Group: System Environment/Libraries
@@ -15,10 +15,13 @@ Source4: infinality-settings.sh
 Source5: infinality-settings-generic
 Source6: xft-settings.sh
 
-Patch1:  freetype-2.2.1-enable-valid.patch
 Patch2:  02-upstream-2016.03.26.patch
-Patch3:  03-infinality-2.6.3-2016.03.26.patch
+Patch3:  03-infinality-2.7-2016.09.09.patch
 
+Patch21:  freetype-2.3.0-enable-spr.patch
+
+# Enable otvalid and gxvalid modules
+Patch46:  freetype-2.2.1-enable-valid.patch
 # Enable additional demos
 Patch47:  freetype-2.5.2-more-demos.patch
 
@@ -27,6 +30,8 @@ Patch88:  freetype-multilib.patch
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1161963
 Patch92:  freetype-2.5.3-freetype-config-prefix.patch
+
+Patch93:  freetype-2.6.5-libtool.patch
 
 BuildRequires: libX11-devel
 BuildRequires: libpng-devel
@@ -86,10 +91,14 @@ FreeType.
 %prep
 %setup -q -b 1 -a 2 -n freetype-%{version}
 
-%patch1  -p1 -b .enable-valid
-%patch2  -p1 -b .upstream
+# %patch2  -p1 -b .upstream
 %patch3  -p1 -b .infinality
 
+%patch46  -p1 -b .enable-valid
+
+%if %{?_with_subpixel_rendering:1}%{!?_with_subpixel_rendering:0}
+%patch21  -p1 -b .enable-spr
+%endif
 
 pushd ft2demos-%{version}
 %patch47  -p1 -b .more-demos
@@ -98,6 +107,8 @@ popd
 %patch88 -p1 -b .multilib
 
 %patch92 -p1 -b .freetype-config-prefix
+
+%patch93 -p1 -b .libtool
 
 cp %{SOURCE4} .
 cp %{SOURCE5} .
