@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
+<head>
+<title>rpms/freetype.git - freetype</title>
+<meta name='generator' content='cgit v0.12'/>
+<meta name='robots' content='index, nofollow'/>
+<link rel='stylesheet' type='text/css' href='/cgit-data/cgit.css'/>
+<link rel='shortcut icon' href='/favicon.ico'/>
+<link rel='alternate' title='Atom feed' href='http://pkgs.fedoraproject.org/cgit/rpms/freetype.git/atom/freetype-2.3.0-enable-spr.patch?h=master' type='application/atom+xml'/>
+<link rel='vcs-git' href='https://src.fedoraproject.org/git/rpms/freetype.git' title='rpms/freetype.git Git repository'/>
+</head>
+<body>
+<script src="https://apps.fedoraproject.org/fedmenu/js/jquery-1.11.2.min.js"></script>
+<script src="https://apps.fedoraproject.org/fedmenu/js/fedmenu.js"></script>
+
+<script>
+    var base = 'https://apps.fedoraproject.org/';
+    var tokens = window.location.href.split('/');
+  var repo = null;
+  if (tokens.length > 5 && tokens[4] == 'rpms' && tokens[5] != '') {
+    repo = tokens[5].split('.')[0];
+  }
+  fedmenu({
+      'url': base + 'js/data.js',
+      'mimeType': 'application/javascript',
+      'position': 'bottom-right',
+      'package': repo,
+  });
+</script>
+<div id='cgit'><table id='header'>
+<tr>
+<td class='logo' rowspan='2'><a href='/cgit/'><img src='/cgit-data/cgit.png' alt='cgit logo'/></a></td>
+<td class='main'><a href='/cgit/'>index</a> : <a title='rpms/freetype.git' href='/cgit/rpms/freetype.git/'>rpms/freetype.git</a></td><td class='form'><form method='get' action=''>
+<select name='h' onchange='this.form.submit();'>
+<option value='f10'>f10</option>
+<option value='f11'>f11</option>
+<option value='f12'>f12</option>
+<option value='f13'>f13</option>
+<option value='f14'>f14</option>
+<option value='f15'>f15</option>
+<option value='f16'>f16</option>
+<option value='f17'>f17</option>
+<option value='f18'>f18</option>
+<option value='f19'>f19</option>
+<option value='f20'>f20</option>
+<option value='f21'>f21</option>
+<option value='f22'>f22</option>
+<option value='f23'>f23</option>
+<option value='f24'>f24</option>
+<option value='f25'>f25</option>
+<option value='f7'>f7</option>
+<option value='f8'>f8</option>
+<option value='f9'>f9</option>
+<option value='master' selected='selected'>master</option>
+</select> <input type='submit' name='' value='switch'/></form></td></tr>
+<tr><td class='sub'>freetype</td><td class='sub right'>Jesse Keating</td></tr></table>
+<table class='tabs'><tr><td>
+<a href='/cgit/rpms/freetype.git/'>summary</a><a href='/cgit/rpms/freetype.git/refs/'>refs</a><a href='/cgit/rpms/freetype.git/log/freetype-2.3.0-enable-spr.patch'>log</a><a class='active' href='/cgit/rpms/freetype.git/tree/freetype-2.3.0-enable-spr.patch'>tree</a><a href='/cgit/rpms/freetype.git/commit/freetype-2.3.0-enable-spr.patch'>commit</a><a href='/cgit/rpms/freetype.git/diff/freetype-2.3.0-enable-spr.patch'>diff</a><a href='/cgit/rpms/freetype.git/stats/freetype-2.3.0-enable-spr.patch'>stats</a></td><td class='form'><form class='right' method='get' action='/cgit/rpms/freetype.git/log/freetype-2.3.0-enable-spr.patch'>
+<select name='qt'>
+<option value='grep'>log msg</option>
+<option value='author'>author</option>
+<option value='committer'>committer</option>
+<option value='range'>range</option>
+</select>
+<input class='txt' type='text' size='10' name='q' value=''/>
+<input type='submit' value='search'/>
+</form>
+</td></tr></table>
+<div class='path'>path: <a href='/cgit/rpms/freetype.git/tree/'>root</a>/<a href='/cgit/rpms/freetype.git/tree/freetype-2.3.0-enable-spr.patch'>freetype-2.3.0-enable-spr.patch</a></div><div class='content'>blob: 8432e28a412f0299957a5a67dd16dbdbe025d326 (<a href='/cgit/rpms/freetype.git/plain/freetype-2.3.0-enable-spr.patch'>plain</a>)
+<table summary='blob content' class='blob'>
+<tr><td class='linenumbers'><pre><a id='n1' href='#n1'>1</a>
+<a id='n2' href='#n2'>2</a>
+<a id='n3' href='#n3'>3</a>
+<a id='n4' href='#n4'>4</a>
+<a id='n5' href='#n5'>5</a>
+<a id='n6' href='#n6'>6</a>
+<a id='n7' href='#n7'>7</a>
+<a id='n8' href='#n8'>8</a>
+<a id='n9' href='#n9'>9</a>
+<a id='n10' href='#n10'>10</a>
+<a id='n11' href='#n11'>11</a>
+</pre></td>
+<td class='lines'><pre><code>--- freetype-2.3.0/include/freetype/config/ftoption.h.spf	2007-01-18 14:27:34.000000000 -0500
++++ freetype-2.3.0/include/freetype/config/ftoption.h	2007-01-18 14:27:48.000000000 -0500
+@@ -92,7 +92,7 @@
+   /* This is done to allow FreeType clients to run unmodified, forcing     */
+   /* them to display normal gray-level anti-aliased glyphs.                */
+   /*                                                                       */
+-/* #define FT_CONFIG_OPTION_SUBPIXEL_RENDERING */
++#define FT_CONFIG_OPTION_SUBPIXEL_RENDERING
+ 
+ 
+   /*************************************************************************/
+</code></pre></td></tr></table>
+</div> <!-- class=content -->
+<div class='footer'>generated by <a href='http://git.zx2c4.com/cgit/about/'>cgit v0.12</a> at 2017-01-09 19:47:03 (GMT)</div>
+</div> <!-- id=cgit -->
+</body>
+</html>
