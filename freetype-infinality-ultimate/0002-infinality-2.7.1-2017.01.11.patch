@@ -1,6 +1,6 @@
-diff -ruN freetype-2.6.5-orig/builds/freetype.mk freetype-2.6.5/builds/freetype.mk
---- freetype-2.6.5-orig/builds/freetype.mk	2016-08-18 19:40:29.008037429 +0200
-+++ freetype-2.6.5/builds/freetype.mk	2016-08-18 19:40:37.859037197 +0200
+diff -ruN freetype-2.7.1-orig/builds/freetype.mk freetype-2.7.1/builds/freetype.mk
+--- freetype-2.7.1-orig/builds/freetype.mk	2017-01-11 12:28:16.720016867 +0100
++++ freetype-2.7.1/builds/freetype.mk	2017-01-11 12:28:34.873016390 +0100
 @@ -161,6 +161,7 @@
               $(CFLAGS) \
               $DFT2_BUILD_LIBRARY \
@@ -9,9 +9,9 @@ diff -ruN freetype-2.6.5-orig/builds/freetype.mk freetype-2.6.5/builds/freetype.
               $(FTOPTION_FLAG)
  
  
-diff -ruN freetype-2.6.5-orig/configure freetype-2.6.5/configure
---- freetype-2.6.5-orig/configure	2016-08-18 19:40:29.076037427 +0200
-+++ freetype-2.6.5/configure	2016-08-18 19:40:37.860037197 +0200
+diff -ruN freetype-2.7.1-orig/configure freetype-2.7.1/configure
+--- freetype-2.7.1-orig/configure	2017-01-11 12:28:16.730016867 +0100
++++ freetype-2.7.1/configure	2017-01-11 12:28:34.873016390 +0100
 @@ -13,6 +13,8 @@
  # Call the `configure' script located in `builds/unix'.
  #
@@ -21,10 +21,10 @@ diff -ruN freetype-2.6.5-orig/configure freetype-2.6.5/configure
  rm -f config.mk builds/unix/unix-def.mk builds/unix/unix-cc.mk
  
  # respect GNUMAKE environment variable for backwards compatibility
-diff -ruN freetype-2.6.5-orig/devel/ftoption.h freetype-2.6.5/devel/ftoption.h
---- freetype-2.6.5-orig/devel/ftoption.h	2016-08-18 19:40:28.795037435 +0200
-+++ freetype-2.6.5/devel/ftoption.h	2016-08-18 19:40:37.863037197 +0200
-@@ -582,6 +582,16 @@
+diff -ruN freetype-2.7.1-orig/devel/ftoption.h freetype-2.7.1/devel/ftoption.h
+--- freetype-2.7.1-orig/devel/ftoption.h	2017-01-11 12:28:16.713016867 +0100
++++ freetype-2.7.1/devel/ftoption.h	2017-01-11 12:28:34.874016390 +0100
+@@ -626,6 +626,16 @@
    /*                                                                       */
  #define TT_CONFIG_OPTION_BYTECODE_INTERPRETER
  
@@ -41,10 +41,10 @@ diff -ruN freetype-2.6.5-orig/devel/ftoption.h freetype-2.6.5/devel/ftoption.h
  
    /*************************************************************************/
    /*                                                                       */
-diff -ruN freetype-2.6.5-orig/include/freetype/config/ftoption.h freetype-2.6.5/include/freetype/config/ftoption.h
---- freetype-2.6.5-orig/include/freetype/config/ftoption.h	2016-08-18 19:40:29.125037426 +0200
-+++ freetype-2.6.5/include/freetype/config/ftoption.h	2016-08-18 19:42:32.469034188 +0200
-@@ -92,7 +92,7 @@
+diff -ruN freetype-2.7.1-orig/include/freetype/config/ftoption.h freetype-2.7.1/include/freetype/config/ftoption.h
+--- freetype-2.7.1-orig/include/freetype/config/ftoption.h	2017-01-11 12:28:16.720016867 +0100
++++ freetype-2.7.1/include/freetype/config/ftoption.h	2017-01-11 12:31:27.676011855 +0100
+@@ -122,7 +122,7 @@
    /* This is done to allow FreeType clients to run unmodified, forcing     */
    /* them to display normal gray-level anti-aliased glyphs.                */
    /*                                                                       */
@@ -53,18 +53,12 @@ diff -ruN freetype-2.6.5-orig/include/freetype/config/ftoption.h freetype-2.6.5/
  
  
    /*************************************************************************/
-@@ -630,9 +630,21 @@
+@@ -626,6 +626,17 @@
    /*                                                                       */
-   /* [1] http://www.microsoft.com/typography/cleartype/truetypecleartype.aspx */
-   /*                                                                       */
--/* #define TT_CONFIG_OPTION_SUBPIXEL_HINTING  1         */
- /* #define TT_CONFIG_OPTION_SUBPIXEL_HINTING  2         */
- /* #define TT_CONFIG_OPTION_SUBPIXEL_HINTING  ( 1 | 2 ) */
-+#define TT_CONFIG_OPTION_SUBPIXEL_HINTING  1
-+
-+
-+   /*************************************************************************/
-+   /*                                                                       */
+ #define TT_CONFIG_OPTION_BYTECODE_INTERPRETER
+ 
++  /*************************************************************************/
++  /*                                                                       */
 +  /* Define FT_CONFIG_OPTION_INFINALITY_PATCHSET if you want to enable     */
 +  /* all additional infinality patches, which are configured via env       */
 +  /* variables.                                                            */
@@ -73,12 +67,24 @@ diff -ruN freetype-2.6.5-orig/include/freetype/config/ftoption.h freetype-2.6.5/
 +  /*   defined.                                                            */
 +  /*                                                                       */
 +#define FT_CONFIG_OPTION_INFINALITY_PATCHSET
++
+ 
+   /*************************************************************************/
+   /*                                                                       */
+@@ -675,8 +686,8 @@
+   /* [1] http://www.microsoft.com/typography/cleartype/truetypecleartype.aspx */
+   /*                                                                       */
+ /* #define TT_CONFIG_OPTION_SUBPIXEL_HINTING  1         */
+-#define TT_CONFIG_OPTION_SUBPIXEL_HINTING  2
+-/* #define TT_CONFIG_OPTION_SUBPIXEL_HINTING  ( 1 | 2 ) */
++#define TT_CONFIG_OPTION_SUBPIXEL_HINTING  1
++#define TT_CONFIG_OPTION_SUBPIXEL_HINTING  ( 1 | 2 )
  
  
    /*************************************************************************/
-diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.c freetype-2.6.5/src/autofit/aflatin.c
---- freetype-2.6.5-orig/src/autofit/aflatin.c	2016-08-18 19:40:29.386037419 +0200
-+++ freetype-2.6.5/src/autofit/aflatin.c	2016-08-18 19:40:37.964037194 +0200
+diff -ruN freetype-2.7.1-orig/src/autofit/aflatin.c freetype-2.7.1/src/autofit/aflatin.c
+--- freetype-2.7.1-orig/src/autofit/aflatin.c	2017-01-11 12:28:16.724016867 +0100
++++ freetype-2.7.1/src/autofit/aflatin.c	2017-01-11 12:28:34.876016390 +0100
 @@ -24,7 +24,10 @@
  #include "afpic.h"
  #include "aflatin.h"
@@ -164,7 +170,7 @@ diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.c freetype-2.6.5/src/autofit/a
  
  #endif
  
-@@ -2398,7 +2424,10 @@
+@@ -2407,7 +2433,10 @@
                dist = edge->fpos - blue->shoot.org;
                if ( dist < 0 )
                  dist = -dist;
@@ -176,7 +182,7 @@ diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.c freetype-2.6.5/src/autofit/a
                dist = FT_MulFix( dist, scale );
                if ( dist < best_dist )
                {
-@@ -2574,8 +2603,17 @@
+@@ -2583,8 +2612,17 @@
      FT_Pos           dist     = width;
      FT_Int           sign     = 0;
      FT_Int           vertical = ( dim == AF_DIMENSION_VERT );
@@ -195,7 +201,7 @@ diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.c freetype-2.6.5/src/autofit/a
      if ( !AF_LATIN_HINTS_DO_STEM_ADJUST( hints ) ||
           axis->extra_light                       )
        return width;
-@@ -2585,9 +2623,76 @@
+@@ -2594,9 +2632,76 @@
        dist = -width;
        sign = 1;
      }
@@ -273,7 +279,7 @@ diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.c freetype-2.6.5/src/autofit/a
      {
        /* smooth hinting process: very lightly quantize the stem width */
  
-@@ -2679,6 +2784,9 @@
+@@ -2688,6 +2793,9 @@
        }
      }
      else
@@ -283,7 +289,7 @@ diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.c freetype-2.6.5/src/autofit/a
      {
        /* strong hinting process: snap the stem width to integer pixels */
  
-@@ -2686,7 +2794,10 @@
+@@ -2695,7 +2803,10 @@
  
  
        dist = af_latin_snap_width( axis->widths, axis->width_count, dist );
@@ -295,7 +301,7 @@ diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.c freetype-2.6.5/src/autofit/a
        if ( vertical )
        {
          /* in the case of vertical hinting, always round */
-@@ -2749,6 +2860,32 @@
+@@ -2758,6 +2869,32 @@
      }
  
    Done_Width:
@@ -328,7 +334,7 @@ diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.c freetype-2.6.5/src/autofit/a
      if ( sign )
        dist = -dist;
  
-@@ -2767,6 +2904,8 @@
+@@ -2776,6 +2913,8 @@
      FT_Pos  dist, base_delta;
      FT_Pos  fitted_width;
  
@@ -337,7 +343,7 @@ diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.c freetype-2.6.5/src/autofit/a
  
      dist       = stem_edge->opos - base_edge->opos;
      base_delta = base_edge->pos - base_edge->opos;
-@@ -3375,8 +3514,11 @@
+@@ -3384,8 +3523,11 @@
      int       dim;
  
      AF_LatinAxis  axis;
@@ -351,7 +357,7 @@ diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.c freetype-2.6.5/src/autofit/a
      error = af_glyph_hints_reload( hints, outline );
      if ( error )
        goto Exit;
-@@ -3446,7 +3588,11 @@
+@@ -3455,7 +3597,11 @@
      }
  
      af_glyph_hints_save( hints, outline );
@@ -364,9 +370,9 @@ diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.c freetype-2.6.5/src/autofit/a
    Exit:
      return error;
    }
-diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.h freetype-2.6.5/src/autofit/aflatin.h
---- freetype-2.6.5-orig/src/autofit/aflatin.h	2016-08-18 19:40:29.364037420 +0200
-+++ freetype-2.6.5/src/autofit/aflatin.h	2016-08-18 19:40:37.877037196 +0200
+diff -ruN freetype-2.7.1-orig/src/autofit/aflatin.h freetype-2.7.1/src/autofit/aflatin.h
+--- freetype-2.7.1-orig/src/autofit/aflatin.h	2017-01-11 12:28:16.724016867 +0100
++++ freetype-2.7.1/src/autofit/aflatin.h	2017-01-11 12:28:34.877016390 +0100
 @@ -64,6 +64,9 @@
  
  #define AF_LATIN_MAX_WIDTHS  16
@@ -377,9 +383,9 @@ diff -ruN freetype-2.6.5-orig/src/autofit/aflatin.h freetype-2.6.5/src/autofit/a
  
  #define AF_LATIN_BLUE_ACTIVE      ( 1U << 0 ) /* zone height is <= 3/4px   */
  #define AF_LATIN_BLUE_TOP         ( 1U << 1 ) /* we have a top blue zone   */
-diff -ruN freetype-2.6.5-orig/src/autofit/afmodule.c freetype-2.6.5/src/autofit/afmodule.c
---- freetype-2.6.5-orig/src/autofit/afmodule.c	2016-08-18 19:40:29.387037419 +0200
-+++ freetype-2.6.5/src/autofit/afmodule.c	2016-08-18 19:40:37.952037194 +0200
+diff -ruN freetype-2.7.1-orig/src/autofit/afmodule.c freetype-2.7.1/src/autofit/afmodule.c
+--- freetype-2.7.1-orig/src/autofit/afmodule.c	2017-01-11 12:28:16.724016867 +0100
++++ freetype-2.7.1/src/autofit/afmodule.c	2017-01-11 12:28:34.877016390 +0100
 @@ -22,6 +22,10 @@
  #include "aferrors.h"
  #include "afpic.h"
@@ -391,7 +397,7 @@ diff -ruN freetype-2.6.5-orig/src/autofit/afmodule.c freetype-2.6.5/src/autofit/
  #ifdef FT_DEBUG_AUTOFIT
  
  #ifndef FT_MAKE_OPTION_SINGLE_OBJECT
-@@ -372,6 +376,9 @@
+@@ -466,6 +470,9 @@
      module->warping           = 0;
  #endif
      module->no_stem_darkening = TRUE;
@@ -401,9 +407,9 @@ diff -ruN freetype-2.6.5-orig/src/autofit/afmodule.c freetype-2.6.5/src/autofit/
  
      module->darken_params[0]  = CFF_CONFIG_OPTION_DARKENING_PARAMETER_X1;
      module->darken_params[1]  = CFF_CONFIG_OPTION_DARKENING_PARAMETER_Y1;
-diff -ruN freetype-2.6.5-orig/src/base/ftbase.c freetype-2.6.5/src/base/ftbase.c
---- freetype-2.6.5-orig/src/base/ftbase.c	2016-08-18 19:40:29.502037416 +0200
-+++ freetype-2.6.5/src/base/ftbase.c	2016-08-18 19:40:37.880037196 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftbase.c freetype-2.7.1/src/base/ftbase.c
+--- freetype-2.7.1-orig/src/base/ftbase.c	2017-01-11 12:28:16.726016867 +0100
++++ freetype-2.7.1/src/base/ftbase.c	2017-01-11 12:28:34.878016390 +0100
 @@ -34,6 +34,9 @@
  #include "ftstream.c"
  #include "fttrigon.c"
@@ -414,9 +420,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftbase.c freetype-2.6.5/src/base/ftbase.c
  
  #ifdef FT_MACINTOSH
  #include "ftmac.c"
-diff -ruN freetype-2.6.5-orig/src/base/ftinf.c freetype-2.6.5/src/base/ftinf.c
---- freetype-2.6.5-orig/src/base/ftinf.c	1970-01-01 01:00:00.000000000 +0100
-+++ freetype-2.6.5/src/base/ftinf.c	2016-08-18 19:40:37.954037194 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftinf.c freetype-2.7.1/src/base/ftinf.c
+--- freetype-2.7.1-orig/src/base/ftinf.c	1970-01-01 01:00:00.000000000 +0100
++++ freetype-2.7.1/src/base/ftinf.c	2017-01-11 12:28:34.879016390 +0100
 @@ -0,0 +1,363 @@
 +#include <stdlib.h>
 +#include "ftinf.h"
@@ -781,9 +787,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftinf.c freetype-2.6.5/src/base/ftinf.c
 +    /* point to the combined and checked settings */
 +    ftinf=&_env;
 +}
-diff -ruN freetype-2.6.5-orig/src/base/ftinf.h freetype-2.6.5/src/base/ftinf.h
---- freetype-2.6.5-orig/src/base/ftinf.h	1970-01-01 01:00:00.000000000 +0100
-+++ freetype-2.6.5/src/base/ftinf.h	2016-08-18 19:40:37.956037194 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftinf.h freetype-2.7.1/src/base/ftinf.h
+--- freetype-2.7.1-orig/src/base/ftinf.h	1970-01-01 01:00:00.000000000 +0100
++++ freetype-2.7.1/src/base/ftinf.h	2017-01-11 12:28:34.879016390 +0100
 @@ -0,0 +1,66 @@
 +#ifndef _FTINF_H_
 +#define _FTINF_H_
@@ -851,9 +857,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftinf.h freetype-2.6.5/src/base/ftinf.h
 +extern void ftinf_env();
 +
 +#endif
-diff -ruN freetype-2.6.5-orig/src/base/ftinf_rh.c freetype-2.6.5/src/base/ftinf_rh.c
---- freetype-2.6.5-orig/src/base/ftinf_rh.c	1970-01-01 01:00:00.000000000 +0100
-+++ freetype-2.6.5/src/base/ftinf_rh.c	2016-08-18 19:40:37.935037195 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftinf_rh.c freetype-2.7.1/src/base/ftinf_rh.c
+--- freetype-2.7.1-orig/src/base/ftinf_rh.c	1970-01-01 01:00:00.000000000 +0100
++++ freetype-2.7.1/src/base/ftinf_rh.c	2017-01-11 12:28:34.880016390 +0100
 @@ -0,0 +1,626 @@
 +/* ANSI-C code produced by gperf version 3.1 */
 +/* Command-line: gperf --output-file=ftinf_rh.c ftinf_rh.gperf  */
@@ -1481,9 +1487,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftinf_rh.c freetype-2.6.5/src/base/ftinf_
 +/*
 +   gperf --output-file=ftinf_rh.c ftinf_rh.gperf
 +*/
-diff -ruN freetype-2.6.5-orig/src/base/ftinf_rh.gperf freetype-2.6.5/src/base/ftinf_rh.gperf
---- freetype-2.6.5-orig/src/base/ftinf_rh.gperf	1970-01-01 01:00:00.000000000 +0100
-+++ freetype-2.6.5/src/base/ftinf_rh.gperf	2016-08-18 19:40:37.936037195 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftinf_rh.gperf freetype-2.7.1/src/base/ftinf_rh.gperf
+--- freetype-2.7.1-orig/src/base/ftinf_rh.gperf	1970-01-01 01:00:00.000000000 +0100
++++ freetype-2.7.1/src/base/ftinf_rh.gperf	2017-01-11 12:28:34.880016390 +0100
 @@ -0,0 +1,283 @@
 +%struct-type
 +%define slot-name name
@@ -1768,9 +1774,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftinf_rh.gperf freetype-2.6.5/src/base/ft
 +/*
 +   gperf --output-file=ftinf_rh.c ftinf_rh.gperf
 +*/
-diff -ruN freetype-2.6.5-orig/src/base/ftinf_sh.c freetype-2.6.5/src/base/ftinf_sh.c
---- freetype-2.6.5-orig/src/base/ftinf_sh.c	1970-01-01 01:00:00.000000000 +0100
-+++ freetype-2.6.5/src/base/ftinf_sh.c	2016-08-18 19:40:37.938037195 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftinf_sh.c freetype-2.7.1/src/base/ftinf_sh.c
+--- freetype-2.7.1-orig/src/base/ftinf_sh.c	1970-01-01 01:00:00.000000000 +0100
++++ freetype-2.7.1/src/base/ftinf_sh.c	2017-01-11 12:28:34.881016390 +0100
 @@ -0,0 +1,463 @@
 +/* ANSI-C code produced by gperf version 3.1 */
 +/* Command-line: gperf --output-file=ftinf_sh.c ftinf_sh.gperf  */
@@ -2235,9 +2241,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftinf_sh.c freetype-2.6.5/src/base/ftinf_
 +/*
 +   gperf --output-file=ftinf_sh.c ftinf_sh.gperf
 +*/
-diff -ruN freetype-2.6.5-orig/src/base/ftinf_sh.gperf freetype-2.6.5/src/base/ftinf_sh.gperf
---- freetype-2.6.5-orig/src/base/ftinf_sh.gperf	1970-01-01 01:00:00.000000000 +0100
-+++ freetype-2.6.5/src/base/ftinf_sh.gperf	2016-08-18 19:40:37.939037195 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftinf_sh.gperf freetype-2.7.1/src/base/ftinf_sh.gperf
+--- freetype-2.7.1-orig/src/base/ftinf_sh.gperf	1970-01-01 01:00:00.000000000 +0100
++++ freetype-2.7.1/src/base/ftinf_sh.gperf	2017-01-11 12:28:34.881016390 +0100
 @@ -0,0 +1,264 @@
 +%struct-type
 +%define slot-name name
@@ -2503,9 +2509,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftinf_sh.gperf freetype-2.6.5/src/base/ft
 +/*
 +   gperf --output-file=ftinf_sh.c ftinf_sh.gperf
 +*/
-diff -ruN freetype-2.6.5-orig/src/base/ftinit.c freetype-2.6.5/src/base/ftinit.c
---- freetype-2.6.5-orig/src/base/ftinit.c	2016-08-18 19:40:29.540037415 +0200
-+++ freetype-2.6.5/src/base/ftinit.c	2016-08-18 19:40:37.895037196 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftinit.c freetype-2.7.1/src/base/ftinit.c
+--- freetype-2.7.1-orig/src/base/ftinit.c	2017-01-11 12:28:16.726016867 +0100
++++ freetype-2.7.1/src/base/ftinit.c	2017-01-11 12:28:34.882016390 +0100
 @@ -43,7 +43,9 @@
  #include FT_INTERNAL_DEBUG_H
  #include FT_MODULE_H
@@ -2517,7 +2523,7 @@ diff -ruN freetype-2.6.5-orig/src/base/ftinit.c freetype-2.6.5/src/base/ftinit.c
  
    /*************************************************************************/
    /*                                                                       */
-@@ -253,9 +255,13 @@
+@@ -362,11 +364,14 @@
      error = FT_New_Library( memory, alibrary );
      if ( error )
        FT_Done_Memory( memory );
@@ -2525,17 +2531,20 @@ diff -ruN freetype-2.6.5-orig/src/base/ftinit.c freetype-2.6.5/src/base/ftinit.c
 +    else {
        FT_Add_Default_Modules( *alibrary );
 -
+-    ft_set_default_properties( *alibrary );
+-
++      ft_set_default_properties( *alibrary );
 +#ifdef FT_CONFIG_OPTION_INFINALITY_PATCHSET
-+      /* get Infinality settings */
-+      ftinf_env();
++	/* get Infinality settings */
++	ftinf_env();
 +#endif
 +    }
      return error;
    }
  
-diff -ruN freetype-2.6.5-orig/src/base/ftlcdfil.c freetype-2.6.5/src/base/ftlcdfil.c
---- freetype-2.6.5-orig/src/base/ftlcdfil.c	2016-08-18 19:40:29.513037416 +0200
-+++ freetype-2.6.5/src/base/ftlcdfil.c	2016-08-18 19:40:37.896037196 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftlcdfil.c freetype-2.7.1/src/base/ftlcdfil.c
+--- freetype-2.7.1-orig/src/base/ftlcdfil.c	2017-01-11 12:28:16.726016867 +0100
++++ freetype-2.7.1/src/base/ftlcdfil.c	2017-01-11 12:28:34.882016390 +0100
 @@ -22,7 +22,10 @@
  #include FT_LCD_FILTER_H
  #include FT_IMAGE_H
@@ -2588,9 +2597,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftlcdfil.c freetype-2.6.5/src/base/ftlcdf
  
      if ( !library )
        return FT_THROW( Invalid_Library_Handle );
-diff -ruN freetype-2.6.5-orig/src/base/ftobjs.c freetype-2.6.5/src/base/ftobjs.c
---- freetype-2.6.5-orig/src/base/ftobjs.c	2016-08-18 19:40:29.544037415 +0200
-+++ freetype-2.6.5/src/base/ftobjs.c	2016-08-18 19:40:37.903037195 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftobjs.c freetype-2.7.1/src/base/ftobjs.c
+--- freetype-2.7.1-orig/src/base/ftobjs.c	2017-01-11 12:28:16.727016867 +0100
++++ freetype-2.7.1/src/base/ftobjs.c	2017-01-11 12:28:34.885016390 +0100
 @@ -40,7 +40,9 @@
  #ifdef FT_CONFIG_OPTION_MAC_FONTS
  #include "ftbase.h"
@@ -2612,9 +2621,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftobjs.c freetype-2.6.5/src/base/ftobjs.c
 +#include "../autofit/aflatin.h"
 +#endif
  
-   FT_BASE_DEF( FT_Pointer )
-   ft_service_list_lookup( FT_ServiceDesc  service_descriptors,
-@@ -554,6 +561,25 @@
+   /* forward declaration */
+   static FT_Error
+@@ -563,6 +570,25 @@
    ft_lookup_glyph_renderer( FT_GlyphSlot  slot );
  
  
@@ -2640,7 +2649,7 @@ diff -ruN freetype-2.6.5-orig/src/base/ftobjs.c freetype-2.6.5/src/base/ftobjs.c
  #ifdef GRID_FIT_METRICS
    static void
    ft_glyphslot_grid_fit_metrics( FT_GlyphSlot  slot,
-@@ -612,8 +638,18 @@
+@@ -621,8 +647,18 @@
      FT_Bool       autohint = FALSE;
      FT_Module     hinter;
      TT_Face       ttface = (TT_Face)face;
@@ -2659,7 +2668,7 @@ diff -ruN freetype-2.6.5-orig/src/base/ftobjs.c freetype-2.6.5/src/base/ftobjs.c
      if ( !face || !face->size || !face->glyph )
        return FT_THROW( Invalid_Face_Handle );
  
-@@ -701,6 +737,18 @@
+@@ -713,6 +749,18 @@
      {
        FT_AutoHinter_Interface  hinting;
  
@@ -2678,7 +2687,7 @@ diff -ruN freetype-2.6.5-orig/src/base/ftobjs.c freetype-2.6.5/src/base/ftobjs.c
  
        /* try to load embedded bitmaps first if available            */
        /*                                                            */
-@@ -746,6 +794,18 @@
+@@ -758,6 +806,18 @@
        if ( error )
          goto Exit;
  
@@ -2697,7 +2706,7 @@ diff -ruN freetype-2.6.5-orig/src/base/ftobjs.c freetype-2.6.5/src/base/ftobjs.c
        if ( slot->format == FT_GLYPH_FORMAT_OUTLINE )
        {
          /* check that the loaded outline is correct */
-@@ -4742,6 +4802,11 @@
+@@ -4874,6 +4934,11 @@
      /* That's ok now */
      *alibrary = library;
  
@@ -2709,9 +2718,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftobjs.c freetype-2.6.5/src/base/ftobjs.c
      return FT_Err_Ok;
  
  #ifdef FT_CONFIG_OPTION_PIC
-diff -ruN freetype-2.6.5-orig/src/base/ftoutln.c freetype-2.6.5/src/base/ftoutln.c
---- freetype-2.6.5-orig/src/base/ftoutln.c	2016-08-18 19:40:29.537037415 +0200
-+++ freetype-2.6.5/src/base/ftoutln.c	2016-08-18 19:40:37.905037195 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftoutln.c freetype-2.7.1/src/base/ftoutln.c
+--- freetype-2.7.1-orig/src/base/ftoutln.c	2017-01-11 12:28:16.726016867 +0100
++++ freetype-2.7.1/src/base/ftoutln.c	2017-01-11 12:28:34.886016390 +0100
 @@ -29,7 +29,9 @@
  #include FT_INTERNAL_CALC_H
  #include FT_INTERNAL_DEBUG_H
@@ -2738,9 +2747,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftoutln.c freetype-2.6.5/src/base/ftoutln
  
      if ( !outline )
        return FT_THROW( Invalid_Outline );
-diff -ruN freetype-2.6.5-orig/src/base/ftsynth.c freetype-2.6.5/src/base/ftsynth.c
---- freetype-2.6.5-orig/src/base/ftsynth.c	2016-08-18 19:40:29.519037416 +0200
-+++ freetype-2.6.5/src/base/ftsynth.c	2016-08-18 19:40:37.907037195 +0200
+diff -ruN freetype-2.7.1-orig/src/base/ftsynth.c freetype-2.7.1/src/base/ftsynth.c
+--- freetype-2.7.1-orig/src/base/ftsynth.c	2017-01-11 12:28:16.726016867 +0100
++++ freetype-2.7.1/src/base/ftsynth.c	2017-01-11 12:28:34.886016390 +0100
 @@ -22,7 +22,9 @@
  #include FT_INTERNAL_OBJECTS_H
  #include FT_OUTLINE_H
@@ -2792,9 +2801,9 @@ diff -ruN freetype-2.6.5-orig/src/base/ftsynth.c freetype-2.6.5/src/base/ftsynth
      slot->metrics.horiAdvance  += xstr;
      slot->metrics.vertAdvance  += ystr;
      slot->metrics.horiBearingY += ystr;
-diff -ruN freetype-2.6.5-orig/src/base/Jamfile freetype-2.6.5/src/base/Jamfile
---- freetype-2.6.5-orig/src/base/Jamfile	2016-08-18 19:40:29.499037416 +0200
-+++ freetype-2.6.5/src/base/Jamfile	2016-08-18 19:40:37.878037196 +0200
+diff -ruN freetype-2.7.1-orig/src/base/Jamfile freetype-2.7.1/src/base/Jamfile
+--- freetype-2.7.1-orig/src/base/Jamfile	2017-01-11 12:28:16.726016867 +0100
++++ freetype-2.7.1/src/base/Jamfile	2017-01-11 12:28:34.886016390 +0100
 @@ -56,6 +56,7 @@
                      ftglyph
                      ftgxval
@@ -2803,9 +2812,9 @@ diff -ruN freetype-2.6.5-orig/src/base/Jamfile freetype-2.6.5/src/base/Jamfile
                      ftlcdfil
                      ftmm
                      ftotval
-diff -ruN freetype-2.6.5-orig/src/base/rules.mk freetype-2.6.5/src/base/rules.mk
---- freetype-2.6.5-orig/src/base/rules.mk	2016-08-18 19:40:29.523037415 +0200
-+++ freetype-2.6.5/src/base/rules.mk	2016-08-18 19:40:37.908037195 +0200
+diff -ruN freetype-2.7.1-orig/src/base/rules.mk freetype-2.7.1/src/base/rules.mk
+--- freetype-2.7.1-orig/src/base/rules.mk	2017-01-11 12:28:16.726016867 +0100
++++ freetype-2.7.1/src/base/rules.mk	2017-01-11 12:28:34.887016390 +0100
 @@ -42,6 +42,7 @@
              $(BASE_DIR)/ftdbgmem.c \
              $(BASE_DIR)/ftgloadr.c \
@@ -2814,9 +2823,9 @@ diff -ruN freetype-2.6.5-orig/src/base/rules.mk freetype-2.6.5/src/base/rules.mk
              $(BASE_DIR)/ftobjs.c   \
              $(BASE_DIR)/ftoutln.c  \
              $(BASE_DIR)/ftpic.c    \
-diff -ruN freetype-2.6.5-orig/src/cff/cffobjs.c freetype-2.6.5/src/cff/cffobjs.c
---- freetype-2.6.5-orig/src/cff/cffobjs.c	2016-08-18 19:40:29.458037417 +0200
-+++ freetype-2.6.5/src/cff/cffobjs.c	2016-08-18 19:40:37.959037194 +0200
+diff -ruN freetype-2.7.1-orig/src/cff/cffobjs.c freetype-2.7.1/src/cff/cffobjs.c
+--- freetype-2.7.1-orig/src/cff/cffobjs.c	2017-01-11 12:28:16.725016867 +0100
++++ freetype-2.7.1/src/cff/cffobjs.c	2017-01-11 12:28:34.887016390 +0100
 @@ -34,6 +34,9 @@
  
  #include "cfferrs.h"
@@ -2827,7 +2836,7 @@ diff -ruN freetype-2.6.5-orig/src/cff/cffobjs.c freetype-2.6.5/src/cff/cffobjs.c
  
    /*************************************************************************/
    /*                                                                       */
-@@ -1096,6 +1099,9 @@
+@@ -1173,6 +1176,9 @@
  #endif
  
      driver->no_stem_darkening = TRUE;
@@ -2837,9 +2846,9 @@ diff -ruN freetype-2.6.5-orig/src/cff/cffobjs.c freetype-2.6.5/src/cff/cffobjs.c
  
      driver->darken_params[0] = CFF_CONFIG_OPTION_DARKENING_PARAMETER_X1;
      driver->darken_params[1] = CFF_CONFIG_OPTION_DARKENING_PARAMETER_Y1;
-diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ftsmooth.c
---- freetype-2.6.5-orig/src/smooth/ftsmooth.c	2016-08-18 19:40:29.392037419 +0200
-+++ freetype-2.6.5/src/smooth/ftsmooth.c	2016-08-18 19:40:37.916037195 +0200
+diff -ruN freetype-2.7.1-orig/src/smooth/ftsmooth.c freetype-2.7.1/src/smooth/ftsmooth.c
+--- freetype-2.7.1-orig/src/smooth/ftsmooth.c	2017-01-11 12:28:16.725016867 +0100
++++ freetype-2.7.1/src/smooth/ftsmooth.c	2017-01-11 12:41:51.510995480 +0100
 @@ -26,6 +26,18 @@
  
  #include "ftsmerrs.h"
@@ -5079,7 +5088,7 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
  
    /* convert a slot's glyph image into a bitmap */
    static FT_Error
-@@ -103,25 +2328,162 @@
+@@ -103,24 +2328,162 @@
                              FT_Render_Mode    required_mode )
    {
      FT_Error     error;
@@ -5099,8 +5108,8 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
  #endif
 +    FT_Bitmap*   bitmap  = &slot->bitmap;
 +    FT_Memory    memory  = render->root.memory;
-     FT_Int       hmul    = mode == FT_RENDER_MODE_LCD;
-     FT_Int       vmul    = mode == FT_RENDER_MODE_LCD_V;
+     FT_Int       hmul    = ( mode == FT_RENDER_MODE_LCD );
+     FT_Int       vmul    = ( mode == FT_RENDER_MODE_LCD_V );
 +    FT_Pos       x_shift = 0;
 +    FT_Pos       y_shift = 0;
 +    FT_Pos       x_left, y_top;
@@ -5135,7 +5144,7 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
 +
 +    FT_Int       brightness_value = 0.0;
 +    FT_Int       contrast_value = 0.0;
- 
++ 
 +    FT_Int       snapping_sliding_scale_value = 0;
 +
 +    FT_Int       global_embolden_x_value = 0;
@@ -5249,9 +5258,9 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
 +
 +#endif
  
+ 
      /* check glyph image format */
-     if ( slot->format != render->glyph_format )
-@@ -137,26 +2499,119 @@
+@@ -137,26 +2500,119 @@
        goto Exit;
      }
  
@@ -5384,7 +5393,7 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
  
      width  = (FT_ULong)( cbox.xMax - cbox.xMin ) >> 6;
      height = (FT_ULong)( cbox.yMax - cbox.yMin ) >> 6;
-@@ -166,16 +2621,29 @@
+@@ -166,16 +2622,29 @@
      height_org = height;
  #endif
  
@@ -5416,7 +5425,7 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
  #ifdef FT_CONFIG_OPTION_SUBPIXEL_RENDERING
  
      if ( slot->library->lcd_filter_func )
-@@ -185,33 +2653,25 @@
+@@ -185,33 +2654,25 @@
  
        if ( hmul )
        {
@@ -5457,7 +5466,7 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
      /* Required check is (pitch * height < FT_ULONG_MAX),        */
      /* but we care realistic cases only.  Always pitch <= width. */
      if ( width > 0x7FFF || height > 0x7FFF )
-@@ -222,6 +2682,22 @@
+@@ -222,6 +2683,22 @@
        goto Exit;
      }
  
@@ -5480,7 +5489,7 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
      /* release old bitmap buffer */
      if ( slot->internal->flags & FT_GLYPH_OWN_BITMAP )
      {
-@@ -229,7 +2705,6 @@
+@@ -229,7 +2706,6 @@
        slot->internal->flags &= ~FT_GLYPH_OWN_BITMAP;
      }
  
@@ -5488,7 +5497,7 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
      if ( FT_ALLOC( bitmap->buffer, (FT_ULong)( pitch * height ) ) )
        goto Exit;
      else
-@@ -237,23 +2712,6 @@
+@@ -237,23 +2713,6 @@
  
      slot->internal->flags |= FT_GLYPH_OWN_BITMAP;
  
@@ -5512,7 +5521,7 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
      /* set up parameters */
      params.target = bitmap;
      params.source = outline;
-@@ -299,9 +2757,153 @@
+@@ -299,9 +2758,153 @@
      if ( error )
        goto Exit;
  
@@ -5666,7 +5675,7 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
  #else /* !FT_CONFIG_OPTION_SUBPIXEL_RENDERING */
  
      /* render outline into bitmap */
-@@ -359,6 +2961,20 @@
+@@ -359,6 +2962,20 @@
  
  #endif /* !FT_CONFIG_OPTION_SUBPIXEL_RENDERING */
  
@@ -5687,7 +5696,7 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
      /* everything is fine; don't deallocate buffer */
      have_buffer = FALSE;
  
-@@ -366,7 +2982,9 @@
+@@ -366,7 +2983,9 @@
  
    Exit:
      if ( have_outline_shifted )
@@ -5698,10 +5707,10 @@ diff -ruN freetype-2.6.5-orig/src/smooth/ftsmooth.c freetype-2.6.5/src/smooth/ft
      if ( have_buffer )
      {
        FT_FREE( bitmap->buffer );
-diff -ruN freetype-2.6.5-orig/src/truetype/ttinterp.c freetype-2.6.5/src/truetype/ttinterp.c
---- freetype-2.6.5-orig/src/truetype/ttinterp.c	2016-08-18 19:40:29.650037412 +0200
-+++ freetype-2.6.5/src/truetype/ttinterp.c	2016-08-18 19:40:37.930037195 +0200
-@@ -5703,6 +5703,7 @@
+diff -ruN freetype-2.7.1-orig/src/truetype/ttinterp.c freetype-2.7.1/src/truetype/ttinterp.c
+--- freetype-2.7.1-orig/src/truetype/ttinterp.c	2017-01-11 12:28:16.728016867 +0100
++++ freetype-2.7.1/src/truetype/ttinterp.c	2017-01-11 12:28:34.895016390 +0100
+@@ -5739,6 +5739,7 @@
  
        if ( exc->ignore_x_mode                                 &&
             exc->GS.freeVector.x != 0                          &&

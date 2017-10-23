@@ -2,7 +2,7 @@
 
 Summary:	Font configuration and customization library
 Name:		fontconfig-infinality-ultimate
-Version:	2.12.1
+Version:	2.12.5
 Release:	1%{?dist}
 # src/ftglue.[ch] is in Public Domain
 # src/fccache.c contains Public Domain code

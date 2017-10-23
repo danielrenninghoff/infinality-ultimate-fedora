@@ -17,7 +17,7 @@ Source6: xft-settings.sh
 
 Patch2:  02-upstream-2016.03.26.patch
 Patch3:  0001-Enable-table-validation-modules.patch
-Patch4:  0002-infinality-2.6.5-2016.08.18.patch
+Patch4:  0002-infinality-2.7.1-2017.01.11.patch
 
 Patch21:  freetype-2.3.0-enable-spr.patch
 
