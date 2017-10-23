@@ -9,7 +9,7 @@
  DATA = $(config_DATA) $(template_DATA)
  am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
  am__DIST_COMMON = $(srcdir)/Makefile.in README
-@@ -343,25 +343,8 @@ target_alias = @target_alias@
+@@ -343,28 +343,8 @@ target_alias = @target_alias@
  top_build_prefix = @top_build_prefix@
  top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
@@ -17,15 +17,18 @@
 -DOC_SOURCES = README.in
  DOC_FILES = $(DOC_SOURCES:.in=)
 -CONF_LINKS = \
+-	10-hinting-$(PREFERRED_HINTING).conf	\
 -	10-scale-bitmap-fonts.conf \
 -	20-unhint-small-vera.conf \
 -	30-urw-aliases.conf \
 -	30-metric-aliases.conf \
 -	40-nonlatin.conf \
+-	45-generic.conf \
 -	45-latin.conf \
 -	49-sansserif.conf \
 -	50-user.conf \
 -	51-local.conf \
+-	60-generic.conf \
 -	60-latin.conf \
 -	65-fonts-persian.conf \
 -	65-nonlatin.conf \
