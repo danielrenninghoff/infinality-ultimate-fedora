@@ -16,7 +16,8 @@ Source5: infinality-settings-generic
 Source6: xft-settings.sh
 
 Patch2:  02-upstream-2016.03.26.patch
-Patch3:  03-infinality-2.7-2016.09.09.patch
+Patch3:  0001-Enable-table-validation-modules.patch
+Patch4:  0002-infinality-2.6.5-2016.08.18.patch
 
 Patch21:  freetype-2.3.0-enable-spr.patch
 
@@ -91,10 +92,11 @@ FreeType.
 %prep
 %setup -q -b 1 -a 2 -n freetype-%{version}
 
-# %patch2  -p1 -b .upstream
+#%patch2  -p1 -b .upstream
 %patch3  -p1 -b .infinality
+%patch4  -p1 -b .infinality
 
-%patch46  -p1 -b .enable-valid
+#%patch46  -p1 -b .enable-valid
 
 %if %{?_with_subpixel_rendering:1}%{!?_with_subpixel_rendering:0}
 %patch21  -p1 -b .enable-spr
